@@ -82,9 +82,9 @@ void initscreen(void){
 	// if(screencolours>256*256*256)screencolours=256*256*256;
 	if(screencolours>256)screencolours=256; //we can't handle 24-bit true colour yet
 	else if(screencolours<16)screencolours=16;
-	cerr<<screencolours<<" colours"<<endl;
-	pair<unsigned int,unsigned int> p=screensize();
-	cerr<<"Screen size: "<<p.first<<'*'<<p.second<<endl;
+	//cerr<<screencolours<<" colours"<<endl;
+	//pair<unsigned int,unsigned int> p=screensize();
+	//cerr<<"Screen size: "<<p.first<<'*'<<p.second<<endl;
 
 	cout<<gettput("smcup")<<gettput("clear")<<flush;
 }
@@ -125,7 +125,7 @@ unsigned int nearest256(const Colour &clr){
 	unsigned int res;
 	if(sqColourDiff(clr,rampClr)<=sqColourDiff(clr,cubeClr))res=232+avg10;
 	else res=16+36*red+6*green+blue;
-	cerr<<"nearest256("<<(int)clr.r<<','<<(int)clr.g<<','<<(int)clr.b<<")="<<res<<endl;
+	//cerr<<"nearest256("<<(int)clr.r<<','<<(int)clr.g<<','<<(int)clr.b<<")="<<res<<endl;
 	return res;
 }
 
@@ -135,7 +135,7 @@ void switchColourFg(const Colour &clr){
 	else if(screencolours==256)asprintf(&s,"setaf %u",nearest256(clr));
 	else return;
 	string tps=gettput(s);
-	cerr<<tps;
+	//cerr<<tps;
 	cout<<tps;
 	free(s);
 }

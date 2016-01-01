@@ -27,10 +27,10 @@ inline bool operator!=(const Screencell &a,const Screencell &b){
 }
 
 void fillRect(Screencell *screen,unsigned int W,unsigned int x,unsigned int y,unsigned int width,unsigned int height,const Colourmode &clr){
-	cerr<<"fillRect called with clr: "
+	/*cerr<<"fillRect called with clr: "
 	    <<(int)clr.fg.r<<','<<(int)clr.fg.g<<','<<(int)clr.fg.b<<"  "
 	    <<(int)clr.bg.r<<','<<(int)clr.bg.g<<','<<(int)clr.bg.b<<"  "
-	    <<clr.ul<<endl;
+	    <<clr.ul<<endl;*/
 	unsigned int i,j;
 	for(i=y;i<y+height;i++){
 		for(j=x;j<x+width;j++){
@@ -82,7 +82,7 @@ void copytoscreen(const Screencell *screen,unsigned int W,unsigned int x,unsigne
 }
 
 void redraw(void){
-	cerr<<"redraw called"<<endl;
+	//cerr<<"redraw called"<<endl;
 	unsigned int scrwidth,scrheight;
 	tie(scrwidth,scrheight)=IO::screensize();
 	Screencell *newscreen=new Screencell[scrwidth*scrheight];

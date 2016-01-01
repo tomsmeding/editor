@@ -79,12 +79,12 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 		acclen+=fname.size()?fname.size():1;
 	}
 	if(acclen>width)factor=(width-(buffers.size()-1))/acclen;
-	cerr<<"factor="<<factor<<endl;
+	//cerr<<"factor="<<factor<<endl;
 	unsigned int x=0,y=0,linenum;
 	unsigned int i,j;
 	unsigned int nbuf=buffers.size();
-	for(i=0;i<nbuf;i++)cerr<<"basenames[i]="<<basenames[i]<<"  "; cerr<<endl;
-	cerr<<"textfg = "<<(int)textfg.r<<' '<<(int)textfg.g<<' '<<(int)textfg.b<<endl;
+	//for(i=0;i<nbuf;i++)cerr<<"basenames[i]="<<basenames[i]<<"  "; cerr<<endl;
+	//cerr<<"textfg = "<<(int)textfg.r<<' '<<(int)textfg.g<<' '<<(int)textfg.b<<endl;
 	for(i=0;i<nbuf;i++){
 		if(i!=0){
 			Screen::Screencell &cell=screen[width*y+x];
@@ -127,7 +127,7 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 		const string line=fbuf.contents.line(linenum);
 		const size_t linelen=line.size();
 		for(i=0;i<linelen;i++){
-			const string pretty=Screen::prettychar(line[i]);
+			const string pretty=line[i]=='\t'?string((x-editx)/4*4+1,' '):Screen::prettychar(line[i]);
 			size_t plen=pretty.size();
 			if(x+pretty.size()>=width){
 				y++;

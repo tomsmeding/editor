@@ -9,7 +9,7 @@ unsigned int uniqid(void){
 }
 
 string basename(string s){
-	cerr<<"Taking basename of <"<<s<<'>'<<endl;
+	//cerr<<"Taking basename of <"<<s<<'>'<<endl;
 	size_t idx=s.rfind('/');
 	if(idx==string::npos)return s;
 	return s.substr(idx+1);

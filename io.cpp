@@ -11,6 +11,8 @@ using namespace std;
 
 namespace IO {
 
+Colour::Colour(void)
+	:r(0),g(0),b(0){}
 Colour::Colour(unsigned char _r,unsigned char _g,unsigned char _b)
 	:r(_r),g(_g),b(_b){}
 

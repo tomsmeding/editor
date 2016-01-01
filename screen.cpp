@@ -104,6 +104,7 @@ void redraw(void){
 		}
 		if(x<scrwidth)copylinetoscreen(newscreen,scrwidth,0,y,scrwidth);
 	}
+	IO::gotoxy(0,scrheight-1);
 	cout.flush();
 }
 

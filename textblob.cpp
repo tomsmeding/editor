@@ -14,7 +14,7 @@ Textblob::Textblob(const string &from){
 	while(true){
 		idx=from.find('\n',cursor);
 		if(idx==string::npos){
-			data.emplace_back(from.begin()+cursor,from.end());
+			if(from.size()-cursor>0)data.emplace_back(from.begin()+cursor,from.end());
 			break;
 		}
 		data.emplace_back(from.begin()+cursor,from.begin()+idx);

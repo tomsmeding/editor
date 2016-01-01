@@ -7,9 +7,9 @@ using namespace std;
 namespace IO {
 
 struct Colour{
-	unsigned char r=0,g=0,b=0;
+	unsigned char r,g,b;
 
-	Colour(void) = default;
+	Colour(void);
 	Colour(unsigned char _r,unsigned char _g,unsigned char _b);
 };
 inline bool operator==(const Colour &a,const Colour &b){

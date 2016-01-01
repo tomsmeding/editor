@@ -5,11 +5,12 @@
 
 using namespace std;
 
-const IO::Colour &screenbg=IO::blue,
-                 &tabbg=IO::red,
-                 &editbg=IO::black,
-                 &textfg=IO::white,
-                 &numberfg=IO::yellow;
+const IO::Colour screenbg=IO::Colour(0,0,0),
+                 screenfg=IO::Colour(198,198,198),
+                 tabbg=IO::Colour(38,38,38),
+                 editbg=IO::Colour(38,38,38),
+                 textfg=IO::Colour(255,255,255),
+                 numberfg=IO::Colour(255,255,0);
 
 namespace Inter {
 
@@ -96,9 +97,14 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 		for(j=0;j<bnlen;j++,x++){
 			Screen::Screencell &cell=screen[width*y+x];
 			cell.ch=basenames[i][j];
-			cell.clr.fg=textfg;
-			if((int)i==frontBuffer)cell.clr.bg=tabbg;
-			else cell.clr.bg=screenbg;
+			cell.clr.fg=screenfg;
+			if((int)i==frontBuffer){
+				cell.clr.fg=textfg;
+				cell.clr.bg=tabbg;
+			} else {
+				cell.clr.fg=screenfg;
+				cell.clr.bg=screenbg;
+			}
 			cell.clr.ul=false;
 		}
 	}
@@ -117,7 +123,7 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 	const unsigned int numberlen=log10(max(fbuf.contents.numlines(),(size_t)1))+1;
 	const unsigned int editx=numberlen+2;
 	linenum=fbuf.scrolly;
-	Screen::fillRect(screen,width,0,y,editx,height-y,{numberfg,screenbg});
+	Screen::fillRect(screen,width,0,y,editx,height-y,{numberfg,editbg});
 	Screen::fillRect(screen,width,editx,y,width-editx,height-y,{textfg,editbg});
 	for(;y<height&&linenum<fbuf.contents.numlines();y++,linenum++){
 		int n=linenum+1;
@@ -127,7 +133,7 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 		const string line=fbuf.contents.line(linenum);
 		const size_t linelen=line.size();
 		for(i=0;i<linelen;i++){
-			const string pretty=line[i]=='\t'?string((x-editx)/4*4+1,' '):Screen::prettychar(line[i]);
+			const string pretty=line[i]=='\t'?string((x-editx+4)/4*4-(x-editx),' '):Screen::prettychar(line[i]);
 			size_t plen=pretty.size();
 			if(x+pretty.size()>=width){
 				y++;

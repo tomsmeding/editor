@@ -138,9 +138,7 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 			if(x+pretty.size()>=width){
 				y++;
 				n=linenum+1;
-				screen[width*y].ch=' ';
-				for(x=editx-2;n;x--,n/=10)screen[width*y+x].ch='0'+n%10;
-				x=editx;
+				for(x=0;x<editx;x++)screen[width*y+x].ch=' ';
 			}
 			for(j=0;j<plen;j++,x++)
 				screen[width*y+x].ch=pretty[j];

@@ -31,6 +31,8 @@ void endscreen(void);
 void switchColourFg(const Colour &clr);
 void switchColourBg(const Colour &clr);
 void switchColourUl(bool ul);
+void turnOnBold(void); //because freakin terminals don't support turning OFF bold
+void clearMarkup(void);
 
 int runloop(void);
 

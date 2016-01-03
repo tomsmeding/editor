@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
+#include <unistd.h>
 #include <termios.h>
 #include <signal.h>
 #include "io.h"
@@ -92,11 +93,13 @@ void initscreen(void){
 	tcgetattr(0,&tios_bak);
 	tios=tios_bak;
 	tios.c_lflag&=~(
-		ECHO|ECHOE|ECHOKE| //no echo of normal characters, erasing and killing
-		ECHOCTL| //don't visibly echo control characters (^V etc.)
-		ECHONL| //don't even echo a newline
-		ICANON| //disable canonical mode
-		NOKERNINFO //don't print a status line on ^T
+		ECHO|ECHOE|ECHOKE //no echo of normal characters, erasing and killing
+		|ECHOCTL //don't visibly echo control characters (^V etc.)
+		|ECHONL //don't even echo a newline
+		|ICANON //disable canonical mode
+		|NOKERNINFO //don't print a status line on ^T
+		|IEXTEN //don't handle things like ^V specially
+		//|ISIG //disable ^C ^\ and ^Z
 		);
 	tios.c_cc[VMIN]=1; //read one char at a time
 	tios.c_cc[VTIME]=0; //no timeout on reading, make it a blocking read
@@ -178,18 +181,28 @@ void switchColourUl(bool ul){
 	else cout<<gettput("rmul");
 }
 
+void turnOnBold(void){
+	cout<<gettput("bold");
+}
 
-void printStatus(string status,Colour clr=Inter::textfg){
+void clearMarkup(void){
+	cout<<gettput("sgr0");
+}
+
+
+void printStatus(string status,Colour clr=Inter::textfg,bool bold=false){
 	unsigned int scrwidth,scrheight;
 	tie(scrwidth,scrheight)=screensize();
 	gotoxy(0,scrheight-1);
 	switchColourFg(clr);
 	switchColourBg(Inter::screenbg);
+	if(bold)turnOnBold();
 	if(status.size()>scrwidth){
 		cout<<status.substr(0,scrwidth-3)<<"...";
 	} else {
 		cout<<status<<string(scrwidth-status.size(),' ');
 	}
+	if(bold)clearMarkup();
 	Screen::gotoFrontBufferCursor();
 	cout.flush();
 }
@@ -247,6 +260,10 @@ CommandRet evalEditorCommand(string cmd){
 	if(cmd=="quit"||cmd=="q")return CR_QUIT;
 	printStatus("Unrecognised command :"+cmd,red);
 	return CR_SUCCESS;
+}
+
+void insertModeRunLoop(void){
+	printStatus("<<INSERT>>",Inter::textfg,true);
 }
 
 int runloop(void){
@@ -321,8 +338,20 @@ int runloop(void){
 			}
 			Screen::redraw();
 			break;
-		case 'q':
-			return 0;
+		case 'i':
+			insertModeRunLoop();
+			break;
+		case '\x16': //^V
+			printStatus("Entering verbose character mode!",red);
+			usleep(1000000);
+			switchColourFg(Inter::textfg);
+			switchColourBg(Inter::screenbg);
+			cout<<gettput("clear")<<flush;
+			while(true){
+				char c=cin.get();
+				cout<<(int)c<<" ("<<Screen::prettychar(c)<<')'<<endl;
+			}
+			break;
 		default:
 			printStatus("Unrecognised command '"+string(1,c)+'\'',red);
 		}

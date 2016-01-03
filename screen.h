@@ -25,8 +25,11 @@ bool operator!=(const Screencell &a,const Screencell &b);
 
 void fillRect(Screencell *screen,unsigned int W,unsigned int x,unsigned int y,unsigned int width,unsigned int height,const Colourmode &clr);
 
+void gotoFrontBufferCursor(void);
+
 string prettychar(char c);
 
+void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyover);
 void redraw(void);
 
 } //namespace Screen

@@ -11,6 +11,8 @@ using namespace std;
 
 namespace Inter {
 
+extern const IO::Colour screenbg,screenfg,tabbg,editbg,textfg,numberfg;
+
 struct Key{
 	int ch;
 	bool ctrl,shift,meta;
@@ -19,7 +21,7 @@ struct Key{
 class Filebuffer{
 public:
 	unsigned int id=uniqid();
-	int scrolly=0;
+	unsigned int curx=0,cury=0,screencurx=0,screencury=0,scrolly=0;
 	string openpath;
 	Textblob contents;
 
@@ -30,7 +32,7 @@ public:
 	bool saveas(string fname);
 
 	bool canopen(void);
-	bool open(string fname);
+	bool open(string fname,bool doredraw=true);
 
 	bool keypress(Key key);
 };
@@ -41,8 +43,8 @@ extern vector<Filebuffer> buffers;
 extern int frontBuffer;
 
 
-Filebuffer& addfilebuffer(void);
-Filebuffer& addfilebuffer(const string &fname);
+Filebuffer& addfilebuffer(bool doredraw=true);
+Filebuffer& addfilebufferfile(const string &fname,bool doredraw=true);
 
 void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int height);
 

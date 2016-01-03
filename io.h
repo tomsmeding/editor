@@ -32,5 +32,7 @@ void switchColourFg(const Colour &clr);
 void switchColourBg(const Colour &clr);
 void switchColourUl(bool ul);
 
+int runloop(void);
+
 }
 

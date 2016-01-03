@@ -33,3 +33,10 @@ string dirname(string s){
 	if(idx==string::npos)return ".";
 	return s.substr(0,idx-1);
 }
+
+string trim(string s){
+	unsigned int start=0,end=s.size()-1;
+	while(start<=end&&s[start]==' ')start++;
+	while(end>=start&&s[end]==' ')end--;
+	return s.substr(start,end-start);
+}

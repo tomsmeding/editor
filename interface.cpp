@@ -5,14 +5,15 @@
 
 using namespace std;
 
-const IO::Colour screenbg=IO::Colour(0,0,0),
-                 screenfg=IO::Colour(198,198,198),
-                 tabbg=IO::Colour(38,38,38),
-                 editbg=IO::Colour(38,38,38),
-                 textfg=IO::Colour(255,255,255),
-                 numberfg=IO::Colour(255,255,0);
-
 namespace Inter {
+
+const IO::Colour
+	screenbg=IO::Colour(0,0,0),
+	screenfg=IO::Colour(198,198,198),
+	tabbg=IO::Colour(38,38,38),
+	editbg=IO::Colour(38,38,38),
+	textfg=IO::Colour(255,255,255),
+	numberfg=IO::Colour(255,255,0);
 
 vector<Filebuffer> buffers;
 
@@ -36,12 +37,12 @@ bool Filebuffer::canopen(void){
 	return true;
 }
 
-bool Filebuffer::open(string fname){
+bool Filebuffer::open(string fname,bool doredraw){
 	openpath=fname;
 	Maybe<string> mcont=Disk::readFromFile(fname);
 	if(mcont.isNothing())return false;
 	contents=Textblob(mcont.fromJust());
-	Screen::redraw();
+	if(doredraw)Screen::redraw();
 	return true;
 }
 
@@ -51,17 +52,18 @@ bool Filebuffer::keypress(Key){
 }
 
 
-Filebuffer& addfilebuffer(void){
+Filebuffer& addfilebuffer(bool doredraw){
+	frontBuffer=buffers.size();
 	buffers.emplace_back();
-	Screen::redraw();
+	if(doredraw)Screen::redraw();
 	return buffers.back();
 }
 
-Filebuffer& addfilebuffer(const string &fname){
+Filebuffer& addfilebufferfile(const string &fname,bool doredraw){
 	frontBuffer=buffers.size();
 	buffers.emplace_back();
 	Filebuffer &buf=buffers.back();
-	buf.open(fname);
+	buf.open(fname,doredraw);
 	return buf;
 }
 
@@ -116,16 +118,20 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 
 	y++; x=0;
 	if(frontBuffer==-1){
-		Screen::fillRect(screen,width,0,y,width,height-y,{textfg,screenbg});
-		return;
+		addfilebuffer(false);
+		/*Screen::fillRect(screen,width,0,y,width,height-y,{textfg,screenbg});
+		return;*/
 	}
 	Filebuffer &fbuf=buffers[frontBuffer];
 	const unsigned int numberlen=log10(max(fbuf.contents.numlines(),(size_t)1))+1;
 	const unsigned int editx=numberlen+2;
 	linenum=fbuf.scrolly;
-	Screen::fillRect(screen,width,0,y,editx,height-y,{numberfg,editbg});
-	Screen::fillRect(screen,width,editx,y,width-editx,height-y,{textfg,editbg});
-	for(;y<height&&linenum<fbuf.contents.numlines();y++,linenum++){
+	Screen::fillRect(screen,width,0,y,editx,height-y-1,{numberfg,editbg});
+	Screen::fillRect(screen,width,editx,y,width-editx,height-y-1,{textfg,editbg});
+	Screen::fillRect(screen,width,0,height-1,width,1,{textfg,screenbg});
+	fbuf.screencurx=0;
+	fbuf.screencury=height-1;
+	for(;y<height-1&&linenum<fbuf.contents.numlines();y++,linenum++){
 		int n=linenum+1;
 		screen[width*y].ch=' ';
 		for(x=editx-2;n;x--,n/=10)screen[width*y+x].ch='0'+n%10;
@@ -133,6 +139,10 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 		const string line=fbuf.contents.line(linenum);
 		const size_t linelen=line.size();
 		for(i=0;i<linelen;i++){
+			if(linenum==fbuf.cury&&i==fbuf.curx){
+				fbuf.screencurx=x;
+				fbuf.screencury=y;
+			}
 			const string pretty=line[i]=='\t'?string((x-editx+4)/4*4-(x-editx),' '):Screen::prettychar(line[i]);
 			size_t plen=pretty.size();
 			if(x+pretty.size()>=width){

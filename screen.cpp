@@ -27,6 +27,7 @@ inline bool operator!=(const Screencell &a,const Screencell &b){
 }
 
 void fillRect(Screencell *screen,unsigned int W,unsigned int x,unsigned int y,unsigned int width,unsigned int height,const Colourmode &clr){
+	//cerr<<"fillrect: W="<<W<<" x,y="<<x<<','<<y<<" w,h="<<width<<','<<height<<endl;
 	/*cerr<<"fillRect called with clr: "
 	    <<(int)clr.fg.r<<','<<(int)clr.fg.g<<','<<(int)clr.fg.b<<"  "
 	    <<(int)clr.bg.r<<','<<(int)clr.bg.g<<','<<(int)clr.bg.b<<"  "
@@ -38,6 +39,15 @@ void fillRect(Screencell *screen,unsigned int W,unsigned int x,unsigned int y,un
 			cell.clr=clr;
 		}
 	}
+}
+
+void gotoFrontBufferCursor(void){
+	unsigned int scrwidth,scrheight;
+	tie(scrwidth,scrheight)=IO::screensize();
+	if(Inter::frontBuffer!=-1){
+		const Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
+		IO::gotoxy(fbuf.screencurx,fbuf.screencury);
+	} else IO::gotoxy(0,scrheight-1);
 }
 
 char dec2hexChar(int n){
@@ -81,13 +91,15 @@ void copytoscreen(const Screencell *screen,unsigned int W,unsigned int x,unsigne
 		copylinetoscreen(screen,W,x,i,width);
 }
 
-void redraw(void){
-	//cerr<<"redraw called"<<endl;
+void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyover){
 	unsigned int scrwidth,scrheight;
 	tie(scrwidth,scrheight)=IO::screensize();
+	const bool validprev=prevscreen&&scrwidth==prevwidth&&scrheight==prevheight;
 	Screencell *newscreen=new Screencell[scrwidth*scrheight];
-	Inter::drawScreen(newscreen,scrwidth,scrheight);
-	if(!prevscreen||scrwidth!=prevwidth||scrheight!=prevheight){
+	if(copyover&&validprev)
+		memcpy(newscreen,prevscreen,scrwidth*scrheight*sizeof(Screencell));
+	drawfunc(newscreen,scrwidth,scrheight);
+	if(!validprev){
 		copytoscreen(newscreen,scrwidth,0,0,scrwidth,scrheight);
 		if(prevscreen)delete[] prevscreen;
 		prevwidth=scrwidth;
@@ -95,17 +107,21 @@ void redraw(void){
 		prevscreen=new Screencell[scrwidth*scrheight];
 		assert(prevscreen);
 		memcpy(prevscreen,newscreen,scrwidth*scrheight*sizeof(Screencell));
-		return;
-	}
-	unsigned int x,y;
-	for(y=0;y<scrheight;y++){
-		for(x=0;x<scrwidth;x++){
-			if(prevscreen[scrwidth*y+x]!=newscreen[scrwidth*y+x])break;
+	} else {
+		unsigned int x,y;
+		for(y=0;y<scrheight;y++){
+			for(x=0;x<scrwidth;x++){
+				if(prevscreen[scrwidth*y+x]!=newscreen[scrwidth*y+x])break;
+			}
+			if(x<scrwidth)copylinetoscreen(newscreen,scrwidth,0,y,scrwidth);
 		}
-		if(x<scrwidth)copylinetoscreen(newscreen,scrwidth,0,y,scrwidth);
 	}
-	IO::gotoxy(0,scrheight-1);
+	gotoFrontBufferCursor();
 	cout.flush();
+}
+
+void redraw(void){
+	redraw(Inter::drawScreen,false);
 }
 
 } //namespace Screen

@@ -38,5 +38,5 @@ string trim(string s){
 	unsigned int start=0,end=s.size()-1;
 	while(start<=end&&s[start]==' ')start++;
 	while(end>=start&&s[end]==' ')end--;
-	return s.substr(start,end-start);
+	return s.substr(start,end-start+1);
 }

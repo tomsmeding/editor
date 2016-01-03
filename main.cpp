@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <signal.h>
 #include "io.h"
@@ -23,6 +24,9 @@ void atexitfunc(void){
 int main(int argc,char **argv){
 	signal(SIGINT,siginthandler);
 	atexit(atexitfunc);
+	ofstream logfile("editor.log");
+	cerr.rdbuf(logfile.rdbuf());
+	cerr<<string(5,'\n');
 	IO::initscreen();
 	screeninited=true;
 	int i;

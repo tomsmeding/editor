@@ -23,7 +23,8 @@ Textblob::Textblob(const string &from){
 }
 
 void Textblob::insert(unsigned int x,unsigned int y,string s){
-	if(y>=data.size()||x>=data[y].size())throw logic_error("Invalid x or y value in Textblob::insert");
+	if(y>=data.size()||x>=data[y].size())
+		throw logic_error("Invalid x or y value in Textblob::insert");
 	size_t cursor=0,idx=s.find('\n');
 	if(idx==string::npos){
 		data[y].insert(data[y].begin()+x,s.begin(),s.end());
@@ -43,7 +44,8 @@ void Textblob::overwrite(unsigned int x,unsigned int y,string s){
 	insert(x,y,s);
 }
 void Textblob::erase(unsigned int x,unsigned int y,unsigned int n){
-	if(y>=data.size()||x>=data[y].size())throw logic_error("Invalid x or y value in Textblob::erase");
+	if(y>=data.size()||x>=data[y].size())
+		throw logic_error("Invalid x or y value in Textblob::erase");
 	if(x+n<data[y].size()){
 		data[y].erase(data[y].begin()+x,data[y].begin()+(x+n));
 		return;
@@ -91,7 +93,8 @@ string Textblob::prettyline(unsigned int y){
 }
 
 string Textblob::prettychar(unsigned int x,unsigned int y){
-	if(y>=data.size()||x>=data[y].size())throw logic_error("Invalid x or y value in Textblob::prettychar");
+	if(y>=data.size()||x>=data[y].size())
+	throw logic_error("Invalid x or y value in Textblob::prettychar");
 	return prettychar(data[y][x]);
 }
 

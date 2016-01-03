@@ -91,9 +91,15 @@ void initscreen(void){
 	struct termios tios;
 	tcgetattr(0,&tios_bak);
 	tios=tios_bak;
-	tios.c_lflag&=~(ECHO|ECHOE|ICANON);
-	tios.c_cc[VMIN]=1;
-	tios.c_cc[VTIME]=0;
+	tios.c_lflag&=~(
+		ECHO|ECHOE|ECHOKE| //no echo of normal characters, erasing and killing
+		ECHOCTL| //don't visibly echo control characters (^V etc.)
+		ECHONL| //don't even echo a newline
+		ICANON| //disable canonical mode
+		NOKERNINFO //don't print a status line on ^T
+		);
+	tios.c_cc[VMIN]=1; //read one char at a time
+	tios.c_cc[VTIME]=0; //no timeout on reading, make it a blocking read
 	tcsetattr(0,TCSAFLUSH,&tios);
 
 	screencolours=stoi(gettput("colors"));
@@ -153,7 +159,6 @@ void switchColourFg(const Colour &clr){
 	else if(screencolours==256)asprintf(&s,"setaf %u",nearest256(clr));
 	else return;
 	string tps=gettput(s);
-	//cerr<<tps;
 	cout<<tps;
 	free(s);
 }
@@ -164,7 +169,6 @@ void switchColourBg(const Colour &clr){
 	else if(screencolours==256)asprintf(&s,"setab %u",nearest256(clr));
 	else return;
 	string tps=gettput(s);
-	//cerr<<tps;
 	cout<<tps;
 	free(s);
 }
@@ -175,11 +179,11 @@ void switchColourUl(bool ul){
 }
 
 
-void printStatus(string status){
+void printStatus(string status,Colour clr=Inter::textfg){
 	unsigned int scrwidth,scrheight;
-	tie(scrwidth,scrheight)=IO::screensize();
+	tie(scrwidth,scrheight)=screensize();
 	gotoxy(0,scrheight-1);
-	switchColourFg(Inter::textfg);
+	switchColourFg(clr);
 	switchColourBg(Inter::screenbg);
 	if(status.size()>scrwidth){
 		cout<<status.substr(0,scrwidth-3)<<"...";
@@ -190,13 +194,30 @@ void printStatus(string status){
 	cout.flush();
 }
 
+void clearStatus(void){
+	unsigned int scrwidth,scrheight;
+	tie(scrwidth,scrheight)=screensize();
+	gotoxy(0,scrheight-1);
+	switchColourBg(Inter::screenbg);
+	cout<<string(scrwidth,' ');
+	Screen::gotoFrontBufferCursor();
+	cout.flush();
+}
+
 string getEditorCommand(void){
 	//TODO more editing keys
+	unsigned int scrwidth,scrheight;
+	tie(scrwidth,scrheight)=screensize();
+	gotoxy(0,scrheight-1);
+	switchColourFg(Inter::textfg);
+	switchColourBg(Inter::screenbg);
+	cout<<':'<<string(scrwidth-1,' ')<<flush;
+	gotoxy(1,scrheight-1);
 	string line;
 	while(true){
 		char c=cin.get();
 		if(c=='\n'||c=='\r')break;
-		else if(c==0x7f){
+		else if(c=='\x7f'){ //backspace
 			if(line.size()){
 				char back=line.back();
 				line.pop_back();
@@ -204,6 +225,8 @@ string getEditorCommand(void){
 				string cubstr=gettput("cub "+to_string(pret.size()));
 				cout<<cubstr<<string(pret.size(),' ')<<cubstr;
 			} else cout<<gettput("bel");
+		} else if(c=='\x1B'){ //escape
+			return "";
 		} else {
 			string pret=Screen::prettychar(c);
 			line.push_back(c);
@@ -221,13 +244,12 @@ enum CommandRet{
 
 CommandRet evalEditorCommand(string cmd){
 	cmd=trim(cmd);
-	if(cmd==string("quit").substr(0,cmd.size()))return CR_QUIT;
+	if(cmd=="quit"||cmd=="q")return CR_QUIT;
+	printStatus("Unrecognised command :"+cmd,red);
 	return CR_SUCCESS;
 }
 
 int runloop(void){
-	unsigned int scrwidth,scrheight;
-	tie(scrwidth,scrheight)=screensize();
 	unsigned int repcount;
 	Inter::Filebuffer *fbuf=Inter::frontBuffer!=-1?&Inter::buffers[Inter::frontBuffer]:NULL;
 	while(true){
@@ -241,12 +263,8 @@ int runloop(void){
 				repcount=10*repcount+c-'0';
 			}
 		}
-		if(c==':'){ //editor command
-			gotoxy(0,scrheight-1);
-			switchColourFg(Inter::textfg);
-			switchColourBg(Inter::screenbg);
-			cout<<':'<<string(scrwidth-1,' ')<<flush;
-			gotoxy(1,scrheight-1);
+		switch(c){
+		case ':':{ //editor command
 			string cmd=getEditorCommand();
 			if(cmd.size()){
 				while(repcount-->0){
@@ -255,32 +273,59 @@ int runloop(void){
 					if(ret==CR_QUIT)return 0;
 				}
 			}
-			continue;
+			Screen::gotoFrontBufferCursor();
+			break;
 		}
-		if(c=='h'||c=='j'||c=='k'||c=='l'){
-			if(!fbuf)printStatus("No buffer open!");
+		case 'h': case 'j': case 'k': case 'l':
+			if(!fbuf)printStatus("No buffer open!",red);
 			else switch(c){
 				case 'h':
-					if(fbuf->curx>0)fbuf->curx--;
-					else cout<<gettput("bel")<<flush;
+					if(fbuf->curx>=repcount)fbuf->curx-=repcount;
+					else {
+						fbuf->curx=0;
+						cout<<gettput("bel")<<flush;
+					}
 					break;
-				case 'j':
-					if(fbuf->cury<fbuf->contents.numlines()-1)fbuf->cury++;
-					else cout<<gettput("bel")<<flush;
+				case 'j':{
+					const unsigned int nln=fbuf->contents.numlines();
+					if(fbuf->cury+repcount<nln)fbuf->cury+=repcount;
+					else {
+						fbuf->cury=nln==0?0:nln-1;
+						cout<<gettput("bel")<<flush;
+					}
+					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
+					if(llen==0)fbuf->curx=0;
+					else if(fbuf->curx>0&&fbuf->curx>=llen)fbuf->curx=llen-1;
 					break;
-				case 'k':
-					if(fbuf->cury>0)fbuf->cury--;
-					else cout<<gettput("bel")<<flush;
+				}
+				case 'k':{
+					if(fbuf->cury>=repcount)fbuf->cury-=repcount;
+					else {
+						fbuf->cury=0;
+						cout<<gettput("bel")<<flush;
+					}
+					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
+					if(llen==0)fbuf->curx=0;
+					else if(fbuf->curx>0&&fbuf->curx>=llen)fbuf->curx=llen-1;
 					break;
-				case 'l':
-					if(fbuf->curx<fbuf->contents.linelen(fbuf->cury)-1)fbuf->curx++;
-					else cout<<gettput("bel")<<flush;
+				}
+				case 'l': {
+					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
+					if(fbuf->curx+repcount<llen)fbuf->curx+=repcount;
+					else {
+						fbuf->curx=llen==0?0:llen-1;
+						cout<<gettput("bel")<<flush;
+					}
 					break;
+				}
 			}
 			Screen::redraw();
-			continue;
+			break;
+		case 'q':
+			return 0;
+		default:
+			printStatus("Unrecognised command '"+string(1,c)+'\'',red);
 		}
-		printStatus("Unrecognised command '"+string(1,c));
 	}
 	return 0;
 }

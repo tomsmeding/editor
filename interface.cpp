@@ -138,6 +138,10 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 		x=editx;
 		const string line=fbuf.contents.line(linenum);
 		const size_t linelen=line.size();
+		if(linelen==0&&linenum==fbuf.cury){
+			fbuf.screencurx=editx;
+			fbuf.screencury=y;
+		}
 		for(i=0;i<linelen;i++){
 			if(linenum==fbuf.cury&&i==fbuf.curx){
 				fbuf.screencurx=x;

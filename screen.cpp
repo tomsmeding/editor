@@ -26,7 +26,11 @@ inline bool operator!=(const Screencell &a,const Screencell &b){
 	return !(a==b);
 }
 
-void fillRect(Screencell *screen,unsigned int W,unsigned int x,unsigned int y,unsigned int width,unsigned int height,const Colourmode &clr){
+void fillRect(Screencell *screen,
+              unsigned int W,
+              unsigned int x,unsigned int y,
+              unsigned int width,unsigned int height,
+              const Colourmode &clr){
 	//cerr<<"fillrect: W="<<W<<" x,y="<<x<<','<<y<<" w,h="<<width<<','<<height<<endl;
 	/*cerr<<"fillRect called with clr: "
 	    <<(int)clr.fg.r<<','<<(int)clr.fg.g<<','<<(int)clr.fg.b<<"  "
@@ -64,7 +68,10 @@ string prettychar(char c){
 	return string(1,c);
 }
 
-void copylinetoscreen(const Screencell *screen,unsigned int W,unsigned int x,unsigned int y,unsigned int width){
+void copylinetoscreen(const Screencell *screen,
+                      unsigned int W,
+                      unsigned int x,unsigned int y,
+                      unsigned int width){
 	IO::gotoxy(x,y);
 	Colourmode clrmode=screen[W*y+x].clr;
 	IO::switchColourFg(clrmode.fg);
@@ -86,7 +93,10 @@ void copylinetoscreen(const Screencell *screen,unsigned int W,unsigned int x,uns
 	}
 }
 
-void copytoscreen(const Screencell *screen,unsigned int W,unsigned int x,unsigned int y,unsigned int width,unsigned char height){
+void copytoscreen(const Screencell *screen,
+                  unsigned int W,
+                  unsigned int x,unsigned int y,
+                  unsigned int width,unsigned char height){
 	for(unsigned int i=y;i<y+height;i++)
 		copylinetoscreen(screen,W,x,i,width);
 }
@@ -96,6 +106,7 @@ void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyove
 	tie(scrwidth,scrheight)=IO::screensize();
 	const bool validprev=prevscreen&&scrwidth==prevwidth&&scrheight==prevheight;
 	Screencell *newscreen=new Screencell[scrwidth*scrheight];
+	//cerr<<"redraw: validprev="<<validprev<<" copyover="<<copyover<<" prevscreen?="<<!!prevscreen<<endl;
 	if(copyover&&validprev)
 		memcpy(newscreen,prevscreen,scrwidth*scrheight*sizeof(Screencell));
 	drawfunc(newscreen,scrwidth,scrheight);
@@ -113,8 +124,12 @@ void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyove
 			for(x=0;x<scrwidth;x++){
 				if(prevscreen[scrwidth*y+x]!=newscreen[scrwidth*y+x])break;
 			}
-			if(x<scrwidth)copylinetoscreen(newscreen,scrwidth,0,y,scrwidth);
+			if(x<scrwidth){
+				//cerr<<"refreshing line "<<y<<" (diff at x="<<x<<')'<<endl;
+				copylinetoscreen(newscreen,scrwidth,0,y,scrwidth);
+			}
 		}
+		memcpy(prevscreen,newscreen,scrwidth*scrheight*sizeof(Screencell));
 	}
 	gotoFrontBufferCursor();
 	cout.flush();

@@ -256,8 +256,21 @@ enum CommandRet{
 };
 
 CommandRet evalEditorCommand(string cmd){
+	bool bang=false;
 	cmd=trim(cmd);
-	if(cmd=="quit"||cmd=="q")return CR_QUIT;
+	if(cmd.back()=='!'){
+		bang=true;
+		cmd.pop_back();
+	}
+
+	if(string("quit").find(cmd)==0){
+		bool unsavedChanges = false; // TODO: check if buffer content has changed.
+		if(!bang&&unsavedChanges){
+			printStatus("Unsaved changes in buffer, force quit with :q[uit]!",red);
+			return CR_SUCCESS;
+		}
+		return CR_QUIT;
+	}
 	printStatus("Unrecognised command :"+cmd,red);
 	return CR_SUCCESS;
 }

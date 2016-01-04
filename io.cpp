@@ -217,15 +217,7 @@ void clearStatus(void){
 	cout.flush();
 }
 
-string getEditorCommand(void){
-	//TODO more editing keys
-	unsigned int scrwidth,scrheight;
-	tie(scrwidth,scrheight)=screensize();
-	gotoxy(0,scrheight-1);
-	switchColourFg(Inter::textfg);
-	switchColourBg(Inter::screenbg);
-	cout<<':'<<string(scrwidth-1,' ')<<flush;
-	gotoxy(1,scrheight-1);
+string getLine(void){
 	string line;
 	while(true){
 		char c=cin.get();
@@ -247,6 +239,19 @@ string getEditorCommand(void){
 		}
 	}
 	return line;
+}
+
+
+string getEditorCommand(void){
+	//TODO more editing keys
+	unsigned int scrwidth,scrheight;
+	tie(scrwidth,scrheight)=screensize();
+	gotoxy(0,scrheight-1);
+	switchColourFg(Inter::textfg);
+	switchColourBg(Inter::screenbg);
+	cout<<':'<<string(scrwidth-1,' ')<<flush;
+	gotoxy(1,scrheight-1);
+	return getLine();
 }
 
 enum CommandRet{

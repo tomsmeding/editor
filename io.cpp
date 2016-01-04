@@ -272,7 +272,7 @@ int runloop(void){
 	while(true){
 		char c=cin.get();
 		repcount=1;
-		if(c>='0'&&c<='9'){
+		if(c>'0'&&c<='9'){
 			repcount=c-'0';
 			while(true){
 				c=cin.get();
@@ -293,7 +293,7 @@ int runloop(void){
 			Screen::gotoFrontBufferCursor();
 			break;
 		}
-		case 'h': case 'j': case 'k': case 'l':
+		case 'h': case 'j': case 'k': case 'l': case '0': case '$':
 			if(!fbuf)printStatus("No buffer open!",red);
 			else switch(c){
 				case 'h':
@@ -333,6 +333,15 @@ int runloop(void){
 						fbuf->curx=llen==0?0:llen-1;
 						cout<<gettput("bel")<<flush;
 					}
+					break;
+				}
+				case '0': {
+					fbuf->curx=0;
+					break;
+				}
+				case '$': {
+					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
+					fbuf->curx=llen==0?0:llen-1;
 					break;
 				}
 			}

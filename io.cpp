@@ -363,6 +363,10 @@ int runloop(void){
 		case 'i':
 			insertModeRunLoop();
 			break;
+		case '\x0C': //^L
+			printStatus("");
+			Screen::redraw();
+			break;
 		case '\x16': //^V
 			printStatus("Entering verbose character mode!",red);
 			usleep(1000000);

@@ -312,7 +312,7 @@ int runloop(void){
 			Screen::gotoFrontBufferCursor();
 			break;
 		}
-		case 'h': case 'j': case 'k': case 'l': case '0': case '$':
+		case 'h': case 'j': case 'k': case 'l': case '0': case '^': case '$':
 			if(!fbuf)printStatus("No buffer open!",red);
 			else switch(c){
 				case 'h':
@@ -357,6 +357,17 @@ int runloop(void){
 				case '0':
 					fbuf->curx=0;
 					break;
+				case '^': {
+					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
+					unsigned int i;
+					for(i=0;i<llen;i++){
+						const char c=fbuf->contents.at(i,fbuf->cury);
+						if(c!=' '&&c!='\t')break;
+					}
+					if(i<llen)fbuf->curx=i;
+					else i=llen==0?0:llen-1;
+					break;
+				}
 				case '$': {
 					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
 					fbuf->curx=llen==0?0:llen-1;

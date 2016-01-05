@@ -217,15 +217,7 @@ void clearStatus(void){
 	cout.flush();
 }
 
-string getEditorCommand(void){
-	//TODO more editing keys
-	unsigned int scrwidth,scrheight;
-	tie(scrwidth,scrheight)=screensize();
-	gotoxy(0,scrheight-1);
-	switchColourFg(Inter::textfg);
-	switchColourBg(Inter::screenbg);
-	cout<<':'<<string(scrwidth-1,' ')<<flush;
-	gotoxy(1,scrheight-1);
+string getLine(void){
 	string line;
 	while(true){
 		char c=cin.get();
@@ -249,6 +241,19 @@ string getEditorCommand(void){
 	return line;
 }
 
+
+string getEditorCommand(void){
+	//TODO more editing keys
+	unsigned int scrwidth,scrheight;
+	tie(scrwidth,scrheight)=screensize();
+	gotoxy(0,scrheight-1);
+	switchColourFg(Inter::textfg);
+	switchColourBg(Inter::screenbg);
+	cout<<':'<<string(scrwidth-1,' ')<<flush;
+	gotoxy(1,scrheight-1);
+	return getLine();
+}
+
 enum CommandRet{
 	CR_SUCCESS=0,
 	CR_FAIL=1,
@@ -256,8 +261,21 @@ enum CommandRet{
 };
 
 CommandRet evalEditorCommand(string cmd){
+	bool bang=false;
 	cmd=trim(cmd);
-	if(cmd=="quit"||cmd=="q")return CR_QUIT;
+	if(cmd.back()=='!'){
+		bang=true;
+		cmd.pop_back();
+	}
+
+	if(string("quit").find(cmd)==0){
+		bool unsavedChanges = false; // TODO: check if buffer content has changed.
+		if(!bang&&unsavedChanges){
+			printStatus("Unsaved changes in buffer, force quit with :q[uit]!",red);
+			return CR_SUCCESS;
+		}
+		return CR_QUIT;
+	}
 	printStatus("Unrecognised command :"+cmd,red);
 	return CR_SUCCESS;
 }
@@ -272,7 +290,7 @@ int runloop(void){
 	while(true){
 		char c=cin.get();
 		repcount=1;
-		if(c>='0'&&c<='9'){
+		if(c>'0'&&c<='9'){
 			repcount=c-'0';
 			while(true){
 				c=cin.get();
@@ -293,7 +311,7 @@ int runloop(void){
 			Screen::gotoFrontBufferCursor();
 			break;
 		}
-		case 'h': case 'j': case 'k': case 'l':
+		case 'h': case 'j': case 'k': case 'l': case '0': case '$':
 			if(!fbuf)printStatus("No buffer open!",red);
 			else switch(c){
 				case 'h':
@@ -335,11 +353,24 @@ int runloop(void){
 					}
 					break;
 				}
+				case '0': {
+					fbuf->curx=0;
+					break;
+				}
+				case '$': {
+					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
+					fbuf->curx=llen==0?0:llen-1;
+					break;
+				}
 			}
 			Screen::redraw();
 			break;
 		case 'i':
 			insertModeRunLoop();
+			break;
+		case '\x0C': //^L
+			printStatus("");
+			Screen::redraw();
 			break;
 		case '\x16': //^V
 			printStatus("Entering verbose character mode!",red);

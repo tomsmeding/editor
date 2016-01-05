@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include <tuple>
+#include <stdexcept>
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
@@ -118,7 +119,7 @@ void initscreen(void){
 
 void endscreen(void){
 	tcsetattr(0,TCSAFLUSH,&tios_bak);
-	cout<<gettput("rmcup");
+	cout<<gettput("rmcup")<<flush;
 }
 
 unsigned int sqColourDiff(const Colour &a,const Colour &b){
@@ -224,7 +225,7 @@ string getLineStdin(void){
 	while(true){
 		char c=cin.get();
 		if(c=='\n'||c=='\r')break;
-		else if(c=='\x7f'){ //backspace
+		else if(c=='\x7F'){ //backspace
 			if(line.size()){
 				char back=line.back();
 				line.pop_back();
@@ -282,7 +283,61 @@ CommandRet evalEditorCommand(string cmd){
 }
 
 void insertModeRunLoop(void){
-	printStatus("<<INSERT>>",Inter::textfg,true);
+	if(Inter::frontBuffer==-1)
+		throw logic_error("Cannot enter insert mode in no buffer");
+	Screen::redraw();
+	printStatus("[INSERT]",Inter::textfg,true);
+	Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
+	while(true){
+		unsigned char c=cin.get();
+		if(c=='\x1B')break; //escape
+		if(c=='\x7F'){ //backspace
+			if(fbuf.curx==0){
+				if(fbuf.cury==0){
+					cout<<gettput("bel")<<flush;
+					continue;
+				}
+				fbuf.cury--;
+				const unsigned int pllen=fbuf.contents.linelen(fbuf.cury);
+				fbuf.contents.erase(pllen,fbuf.cury,1);
+				fbuf.curx=pllen;
+			} else {
+				fbuf.contents.erase(fbuf.curx-1,fbuf.cury,1);
+				fbuf.curx--;
+			}
+			Screen::redraw();
+			continue;
+		}
+		if(c=='\r')c='\n'; //enter
+		if(c=='\t'||c=='\n'||(c>=' '&&c<=(unsigned char)'\x80')){
+			fbuf.contents.insert(fbuf.curx,fbuf.cury,string(1,c));
+			if(c=='\n'){
+				fbuf.curx=0;
+				fbuf.cury++;
+			} else fbuf.curx++;
+			Screen::redraw();
+		} else {
+			cout<<gettput("bel")<<flush;
+			continue;
+		}
+	}
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	if(llen>0&&fbuf.curx>=llen){
+		fbuf.curx=llen-1;
+		Screen::redraw();
+	}
+	clearStatus();
+}
+
+void moveToBeginAfterIndent(Inter::Filebuffer &fbuf){
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	unsigned int i;
+	for(i=0;i<llen;i++){
+		const char c=fbuf.contents.at(i,fbuf.cury);
+		if(c!=' '&&c!='\t')break;
+	}
+	if(i<llen)fbuf.curx=i;
+	else i=llen==0?0:llen-1;
 }
 
 int runloop(void){
@@ -345,7 +400,7 @@ int runloop(void){
 					else if(fbuf->curx>0&&fbuf->curx>=llen)fbuf->curx=llen-1;
 					break;
 				}
-				case 'l': {
+				case 'l':{
 					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
 					if(fbuf->curx+repcount<llen)fbuf->curx+=repcount;
 					else {
@@ -357,18 +412,11 @@ int runloop(void){
 				case '0':
 					fbuf->curx=0;
 					break;
-				case '^': {
-					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
-					unsigned int i;
-					for(i=0;i<llen;i++){
-						const char c=fbuf->contents.at(i,fbuf->cury);
-						if(c!=' '&&c!='\t')break;
-					}
-					if(i<llen)fbuf->curx=i;
-					else i=llen==0?0:llen-1;
+				case '^':{
+					moveToBeginAfterIndent(*fbuf);
 					break;
 				}
-				case '$': {
+				case '$':{
 					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
 					fbuf->curx=llen==0?0:llen-1;
 					break;
@@ -379,8 +427,33 @@ int runloop(void){
 		case 'i':
 			insertModeRunLoop();
 			break;
+		case 'a':
+			fbuf->curx++;
+			insertModeRunLoop();
+			break;
+		case 'I':
+			moveToBeginAfterIndent(*fbuf);
+			insertModeRunLoop();
+			break;
+		case 'A':{
+			const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
+			fbuf->curx=llen;
+			insertModeRunLoop();
+			break;
+		}
+		case 'o':
+			fbuf->contents.insertLineBefore(fbuf->cury+1,"");
+			fbuf->cury++;
+			fbuf->curx=0;
+			insertModeRunLoop();
+			break;
+		case 'O':
+			fbuf->contents.insertLineBefore(fbuf->cury,"");
+			fbuf->curx=0;
+			insertModeRunLoop();
+			break;
 		case '\x0C': //^L
-			printStatus("");
+			clearStatus();
 			Screen::redraw();
 			break;
 		case '\x16': //^V

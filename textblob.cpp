@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include "textblob.h"
@@ -23,42 +24,60 @@ Textblob::Textblob(const string &from){
 }
 
 void Textblob::insert(unsigned int x,unsigned int y,string s){
-	if(y>=data.size()||x>=data[y].size())
+	if(y>=data.size()||x>data[y].size())
 		throw logic_error("Invalid x or y value in Textblob::insert");
 	size_t cursor=0,idx=s.find('\n');
 	if(idx==string::npos){
 		data[y].insert(data[y].begin()+x,s.begin(),s.end());
 		return;
 	}
-	do {
-		data.emplace_back(s.begin()+cursor,s.begin()+idx);
+	data.emplace(data.begin()+(y+1),data[y].begin()+x,data[y].end());
+	data[y].erase(data[y].begin()+x,data[y].end());
+	data[y].insert(data[y].end(),s.begin(),s.begin()+idx);
+	y++;
+	cursor=idx+1;
+	idx=s.find('\n',cursor);
+	while(idx!=string::npos){
+		data.emplace(data.begin()+y,s.begin()+cursor,s.begin()+idx);
 		cursor=idx+1;
-		idx=s.find('\n',cursor);
-	} while(idx!=string::npos);
-	if(s.size()-cursor){
-		data.emplace_back(s.begin()+cursor,s.end());
+		y++;
 	}
+	if(s.size()-cursor){
+		data[y].insert(data[y].begin(),s.begin()+cursor,s.end());
+	}
+}
+void Textblob::insertLineBefore(unsigned int y,string s){
+	if(y>data.size())
+		throw logic_error("Invalid y value in Textblob::insertLineAfter");
+	data.emplace(data.begin()+y,s.begin(),s.end());
 }
 void Textblob::overwrite(unsigned int x,unsigned int y,string s){
 	erase(x,y,s.size());
 	insert(x,y,s);
 }
 void Textblob::erase(unsigned int x,unsigned int y,unsigned int n){
-	if(y>=data.size()||x>=data[y].size())
+	if(y>=data.size()||x>data[y].size())
 		throw logic_error("Invalid x or y value in Textblob::erase");
+	//cerr<<"Textblob::erase("<<x<<','<<y<<','<<n<<')'<<endl;
 	if(x+n<data[y].size()){
+		//cerr<<"  erasing in line"<<endl;
 		data[y].erase(data[y].begin()+x,data[y].begin()+(x+n));
 		return;
 	}
-	n-=data.size()-x;
+	n-=data[y].size()-x;
+	//cerr<<"  n="<<n<<endl;
 	data[y].erase(data[y].begin()+x,data[y].end());
 	if(n==0)return;
 
-	y++; x=0; n--;
+	n--; //newline after current line will be removed later
+	y++; x=0;
+	//cerr<<"  n="<<n<<" y="<<y<<endl;
 	while(y<data.size()&&n>data[y].size()){
+		//cerr<<"  while, n="<<n<<" y="<<y<<endl;
 		n-=data[y].size()+1;
 		data.erase(data.begin()+y);
 	}
+	//cerr<<"  after, n="<<n<<" y="<<y<<endl;
 	data[y-1].insert(data[y-1].end(),data[y].begin()+n,data[y].end());
 	data.erase(data.begin()+y);
 }

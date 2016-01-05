@@ -157,6 +157,10 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 			for(j=0;j<plen;j++,x++)
 				screen[width*y+x].ch=pretty[j];
 		}
+		if(linenum==fbuf.cury&&fbuf.curx==linelen){
+			fbuf.screencurx=x;
+			fbuf.screencury=y;
+		}
 	}
 }
 

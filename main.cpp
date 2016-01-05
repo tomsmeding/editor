@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 #include <cstdlib>
 #include <signal.h>
 #include "io.h"
@@ -30,6 +31,12 @@ int main(int argc,char **argv){
 	IO::initscreen();
 	screeninited=true;
 	int i;
-	for(i=1;i<argc;i++)Inter::addfilebufferfile(argv[i]);
-	return IO::runloop();
+	try {
+		for(i=1;i<argc;i++)Inter::addfilebufferfile(argv[i]);
+		return IO::runloop();
+	} catch(logic_error e){
+		IO::endscreen();
+		cerr.flush();
+		throw e;
+	}
 }

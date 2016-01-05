@@ -256,7 +256,7 @@ string getEditorCommand(void){
 }
 
 enum CommandRet{
-	CR_SUCCESS=0,
+	CR_OK=0,
 	CR_FAIL=1,
 	CR_QUIT=2
 };
@@ -273,12 +273,12 @@ CommandRet evalEditorCommand(string cmd){
 		bool unsavedChanges=false; // TODO: check if buffer content has changed.
 		if(!bang&&unsavedChanges){
 			printStatus("Unsaved changes in buffer, force quit with :q[uit]!",red);
-			return CR_SUCCESS;
+			return CR_OK;
 		}
 		return CR_QUIT;
 	}
 	printStatus("Unrecognised command :"+cmd,red);
-	return CR_SUCCESS;
+	return CR_OK;
 }
 
 void insertModeRunLoop(void){

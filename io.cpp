@@ -217,7 +217,9 @@ void clearStatus(void){
 	cout.flush();
 }
 
-string getLine(void){
+string getLineStdin(void){
+	//TODO more editing keys
+	//TODO fix running over edge of screen
 	string line;
 	while(true){
 		char c=cin.get();
@@ -243,7 +245,6 @@ string getLine(void){
 
 
 string getEditorCommand(void){
-	//TODO more editing keys
 	unsigned int scrwidth,scrheight;
 	tie(scrwidth,scrheight)=screensize();
 	gotoxy(0,scrheight-1);
@@ -251,7 +252,7 @@ string getEditorCommand(void){
 	switchColourBg(Inter::screenbg);
 	cout<<':'<<string(scrwidth-1,' ')<<flush;
 	gotoxy(1,scrheight-1);
-	return getLine();
+	return getLineStdin();
 }
 
 enum CommandRet{
@@ -268,8 +269,8 @@ CommandRet evalEditorCommand(string cmd){
 		cmd.pop_back();
 	}
 
-	if(string("quit").find(cmd)==0){
-		bool unsavedChanges = false; // TODO: check if buffer content has changed.
+	if(string("quit").substr(0,cmd.size())==cmd){
+		bool unsavedChanges=false; // TODO: check if buffer content has changed.
 		if(!bang&&unsavedChanges){
 			printStatus("Unsaved changes in buffer, force quit with :q[uit]!",red);
 			return CR_SUCCESS;
@@ -353,10 +354,9 @@ int runloop(void){
 					}
 					break;
 				}
-				case '0': {
+				case '0':
 					fbuf->curx=0;
 					break;
-				}
 				case '$': {
 					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
 					fbuf->curx=llen==0?0:llen-1;

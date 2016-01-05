@@ -34,6 +34,6 @@ void gotoFrontBufferCursor(void);
 string prettychar(char c);
 
 void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyover);
-void redraw(void);
+void redraw(bool forceredraw=false);
 
 } //namespace Screen

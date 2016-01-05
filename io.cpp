@@ -218,10 +218,13 @@ void clearStatus(void){
 	cout.flush();
 }
 
-string getLineStdin(void){
+string getLineStdin(unsigned int startx=0){
 	//TODO more editing keys
-	//TODO fix running over edge of screen
-	string line;
+	unsigned int scrwidth,scrheight;
+	tie(scrwidth,scrheight)=screensize();
+	unsigned int maxlen=startx>=scrwidth?-1:scrwidth-startx;
+	string line,prettyline;
+	unsigned int scrollx=0;
 	while(true){
 		char c=cin.get();
 		if(c=='\n'||c=='\r')break;
@@ -229,16 +232,36 @@ string getLineStdin(void){
 			if(line.size()){
 				char back=line.back();
 				line.pop_back();
-				string pret=Screen::prettychar(back);
-				string cubstr=gettput("cub "+to_string(pret.size()));
-				cout<<cubstr<<string(pret.size(),' ')<<cubstr;
+				const string pret=Screen::prettychar(back);
+				for(unsigned int i=pret.size();i>0;i--)prettyline.pop_back();
+				if(prettyline.size()-scrollx<=0){
+					scrollx=scrollx<maxlen*2/3?0:scrollx-maxlen*2/3;
+					cout<<gettput("hpa "+to_string(startx))
+					    <<(scrollx>0?"$":"")
+					    <<prettyline.substr(scrollx,maxlen-(scrollx>0))
+					    <<gettput("el")
+					    <<flush;
+				} else {
+					string cubstr=gettput("cub "+to_string(pret.size()));
+					cout<<cubstr<<string(pret.size(),' ')<<cubstr;
+				}
 			} else cout<<gettput("bel");
 		} else if(c=='\x1B'){ //escape
 			return "";
 		} else {
 			string pret=Screen::prettychar(c);
 			line.push_back(c);
-			cout<<pret;
+			prettyline+=pret;
+			if(prettyline.size()+pret.size()-scrollx<=maxlen-(scrollx>0)){
+				cout<<pret;
+			} else {
+				scrollx+=maxlen*2/3;
+				cout<<gettput("hpa "+to_string(startx))
+				    <<'$'
+				    <<prettyline.substr(scrollx,maxlen-(scrollx>0))
+				    <<gettput("el")
+				    <<flush;
+			}
 		}
 	}
 	return line;
@@ -253,7 +276,7 @@ string getEditorCommand(void){
 	switchColourBg(Inter::screenbg);
 	cout<<':'<<string(scrwidth-1,' ')<<flush;
 	gotoxy(1,scrheight-1);
-	return getLineStdin();
+	return getLineStdin(1);
 }
 
 enum CommandRet{
@@ -454,9 +477,14 @@ int runloop(void){
 			break;
 		case '\x0C': //^L
 			clearStatus();
-			Screen::redraw();
+			Screen::redraw(true);
 			break;
 		case '\x16': //^V
+			printStatus("Press ^V again to enter verbose character debug mode!",red);
+			if(cin.get()!='\x16'){
+				printStatus("k nope");
+				break;
+			}
 			printStatus("Entering verbose character mode!",red);
 			usleep(1000000);
 			switchColourFg(Inter::textfg);

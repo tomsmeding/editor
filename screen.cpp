@@ -101,7 +101,7 @@ void copytoscreen(const Screencell *screen,
 		copylinetoscreen(screen,W,x,i,width);
 }
 
-void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyover){
+void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyover,bool forceredraw){
 	unsigned int scrwidth,scrheight;
 	tie(scrwidth,scrheight)=IO::screensize();
 	const bool validprev=prevscreen&&scrwidth==prevwidth&&scrheight==prevheight;
@@ -110,7 +110,7 @@ void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyove
 	if(copyover&&validprev)
 		memcpy(newscreen,prevscreen,scrwidth*scrheight*sizeof(Screencell));
 	drawfunc(newscreen,scrwidth,scrheight);
-	if(!validprev){
+	if(!validprev||forceredraw){
 		copytoscreen(newscreen,scrwidth,0,0,scrwidth,scrheight);
 		if(prevscreen)delete[] prevscreen;
 		prevwidth=scrwidth;
@@ -135,8 +135,8 @@ void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyove
 	cout.flush();
 }
 
-void redraw(void){
-	redraw(Inter::drawScreen,false);
+void redraw(bool forceredraw){
+	redraw(Inter::drawScreen,false,forceredraw);
 }
 
 } //namespace Screen

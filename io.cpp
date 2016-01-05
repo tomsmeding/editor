@@ -328,6 +328,7 @@ void insertModeRunLoop(void){
 				fbuf.contents.erase(fbuf.curx-1,fbuf.cury,1);
 				fbuf.curx--;
 			}
+			fbuf.dirty=true;
 			Screen::redraw();
 			continue;
 		}
@@ -338,6 +339,7 @@ void insertModeRunLoop(void){
 				fbuf.curx=0;
 				fbuf.cury++;
 			} else fbuf.curx++;
+			fbuf.dirty=true;
 			Screen::redraw();
 		} else {
 			cout<<gettput("bel")<<flush;

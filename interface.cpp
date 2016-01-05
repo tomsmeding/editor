@@ -75,13 +75,18 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 	double factor=1;
 	vector<string> basenames;
 	basenames.reserve(buffers.size());
+	int ndirty=0;
 	for(const Filebuffer &buffer : buffers){
 		basenames.push_back(basename(buffer.openpath));
 		const string &fname=basenames.back();
 		if(acclen)acclen++; //space between tabs
 		acclen+=fname.size()?fname.size():1;
+		if(buffer.dirty){
+			acclen++;
+			ndirty++;
+		}
 	}
-	if(acclen>width)factor=(width-(buffers.size()-1))/acclen;
+	if(acclen>width)factor=(width-(buffers.size()-1-ndirty))/acclen;
 	//cerr<<"factor="<<factor<<endl;
 	unsigned int x=0,y=0,linenum;
 	unsigned int i,j;
@@ -93,6 +98,7 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 			Screen::Screencell &cell=screen[width*y+x];
 			cell.ch=' ';
 			cell.clr.bg=screenbg;
+			cell.clr.ul=false;
 			x++;
 		}
 		const unsigned int bnlen=(unsigned int)(basenames[i].size()*factor);
@@ -104,10 +110,17 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 				cell.clr.fg=textfg;
 				cell.clr.bg=tabbg;
 			} else {
-				cell.clr.fg=screenfg;
 				cell.clr.bg=screenbg;
 			}
 			cell.clr.ul=false;
+		}
+		if(buffers[i].dirty){
+			Screen::Screencell &cell=screen[width*y+x];
+			cell.ch='*';
+			cell.clr.fg=textfg;
+			cell.clr.bg=tabbg;
+			cell.clr.ul=false;
+			x++;
 		}
 	}
 	for(;x<width;x++){

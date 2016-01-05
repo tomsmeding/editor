@@ -22,6 +22,7 @@ class Filebuffer{
 public:
 	unsigned int id=uniqid();
 	unsigned int curx=0,cury=0,screencurx=0,screencury=0,scrolly=0;
+	bool dirty=false;
 	string openpath;
 	Textblob contents;
 

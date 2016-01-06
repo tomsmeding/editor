@@ -4,6 +4,7 @@
 #include <string>
 #include "textblob.h"
 #include "screen.h"
+#include "maybe.h"
 #include "util.h"
 
 using namespace std;
@@ -12,11 +13,6 @@ using namespace std;
 namespace Inter {
 
 extern const IO::Colour screenbg,screenfg,tabbg,editbg,textfg,numberfg;
-
-struct Key{
-	int ch;
-	bool ctrl,shift,meta;
-};
 
 class Filebuffer{
 public:
@@ -29,13 +25,11 @@ public:
 	Filebuffer(void) = default;
 
 	bool cansave(void);
-	bool save(void);
-	bool saveas(string fname);
+	Maybe<string> save(void); //maybe returns an error
+	Maybe<string> saveas(string fname); //maybe returns an error
 
 	bool canopen(void);
 	bool open(string fname,bool doredraw=true);
-
-	bool keypress(Key key);
 };
 
 

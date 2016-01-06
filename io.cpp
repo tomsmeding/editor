@@ -280,30 +280,116 @@ string getEditorCommand(void){
 }
 
 enum CommandRet{
-	CR_OK=0,
-	CR_FAIL=1,
-	CR_QUIT=2
+	CR_OK=0, //succesful execution of command (or reported failure)
+	CR_FAIL, //fatal failure!
+	CR_QUIT, //should quit editor
+
+	CR_NEXT //try next command, this one is not applicable...
 };
 
-CommandRet evalEditorCommand(string cmd){
-	bool bang=false;
-	cmd=trim(cmd);
-	if(cmd.back()=='!'){
-		bang=true;
-		cmd.pop_back();
+#define CALL_EDITOR_COMMAND_RETURN_NOTNEXT(nm,cmd,cmd0,bang) \
+	{ \
+		CommandRet ret=editorCommand##nm(cmd,cmd0,bang); \
+		if(ret!=CR_NEXT)return ret; \
+	}
+#define CALL_EDITOR_COMMAND_RETURN_FAILQUIT(nm,cmd,cmd0,bang) \
+	{ \
+		CommandRet ret=editorCommand##nm(cmd,cmd0,bang); \
+		if(ret==CR_FAIL||ret==CR_QUIT)return ret; \
 	}
 
-	if(string("quit").substr(0,cmd.size())==cmd){
-		bool unsavedChanges=false; // TODO: check if buffer content has changed.
-		if(!bang&&unsavedChanges){
-			printStatus("Unsaved changes in buffer, force quit with :q[uit]!",red);
-			return CR_OK;
-		}
-		return CR_QUIT;
+CommandRet editorCommandQuit(vector<string> cmd,string cmd0,bool bang){
+	if(!startswith("quit",cmd0))return CR_NEXT;
+	if(cmd.size()!=1){
+		printStatus(":q[uit] takes no arguments",red);
+		return CR_OK;
 	}
-	printStatus("Unrecognised command :"+cmd,red);
+	if(Inter::frontBuffer==-1)return CR_QUIT;
+	if(!bang&&Inter::buffers[Inter::frontBuffer].dirty){
+		printStatus("Unsaved changes in buffer, force quit with :q[uit]!",red);
+		return CR_OK;
+	}
+	Inter::buffers.erase(Inter::buffers.begin()+Inter::frontBuffer);
+	if(Inter::buffers.size()==0)return CR_QUIT;
+	if(Inter::frontBuffer>0&&Inter::buffers.size())
+		Inter::frontBuffer--;
+	Screen::redraw();
 	return CR_OK;
 }
+
+CommandRet editorCommandQall(vector<string> cmd,string cmd0,bool bang){
+	if(!startswith("qall",cmd0,2))return CR_NEXT;
+	if(cmd.size()!=1){
+		printStatus(":qa[ll] takes no arguments",red);
+		return CR_OK;
+	}
+	if(!bang){
+		for(int i=Inter::buffers.size()-1;i>=0;i--){
+			if(!Inter::buffers[i].dirty)continue;
+			printStatus("Unsaved changes in this buffer, force quit all with :qa[ll]!",red);
+			Inter::frontBuffer=i;
+			Screen::redraw();
+			return CR_OK;
+		}
+	}
+	Inter::buffers.clear();
+	return CR_QUIT;
+}
+
+CommandRet editorCommandWrite(vector<string> cmd,string cmd0,bool bang){
+	if(!startswith("write",cmd0)||bang)return CR_NEXT;
+	if(cmd.size()>2){
+		printStatus(":w[rite] takes 0 or 1 argument",red);
+		return CR_OK;
+	}
+	if(Inter::frontBuffer==-1){
+		printStatus("Can't write no buffer",red);
+		return CR_OK;
+	}
+	Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
+	if(fbuf.openpath.size()==0&&cmd.size()==1){
+		printStatus("Buffer not linked to a file, and no name given",red);
+		return CR_OK;
+	}
+	const Maybe<string> err=cmd.size()==2?fbuf.saveas(cmd[1]):fbuf.save();
+	if(err.isJust()){
+		printStatus("Couldn't write: "+err.fromJust(),red);
+		return CR_OK;
+	}
+	fbuf.dirty=false;
+	printStatus("written");
+	Screen::redraw();
+	return CR_OK;
+}
+
+CommandRet editorCommandWq(vector<string> cmd,string cmd0,bool bang){
+	if(cmd0!="wq")return CR_NEXT;
+	CALL_EDITOR_COMMAND_RETURN_FAILQUIT(Write,cmd,"write",false)
+	CALL_EDITOR_COMMAND_RETURN_FAILQUIT(Quit,cmd,"quit",bang)
+	return CR_OK; //apparently Quit didn't quit
+}
+
+CommandRet evalEditorCommand(string scmd){
+	bool bang=false;
+	vector<string> cmd=splitSmart(scmd,' ');
+	if(cmd.size()==0)return CR_OK;
+	string cmd0=cmd[0];
+	if(cmd0.back()=='!'){
+		bang=true;
+		cmd0.pop_back();
+	}
+
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq   ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall ,cmd,cmd0,bang)
+
+	printStatus("Unrecognised command :"+join(cmd,' '),red);
+	return CR_OK;
+}
+
+#undef CALL_EDITOR_COMMAND_RETURN_NOTNEXT
+#undef CALL_EDITOR_COMMAND_RETURN_FAILQUIT
 
 void insertModeRunLoop(void){
 	if(Inter::frontBuffer==-1)
@@ -367,8 +453,8 @@ void moveToBeginAfterIndent(Inter::Filebuffer &fbuf){
 
 int runloop(void){
 	unsigned int repcount;
-	Inter::Filebuffer *fbuf=Inter::frontBuffer!=-1?&Inter::buffers[Inter::frontBuffer]:NULL;
 	while(true){
+		Inter::Filebuffer *fbuf=Inter::frontBuffer!=-1?&Inter::buffers[Inter::frontBuffer]:NULL;
 		char c=cin.get();
 		repcount=1;
 		if(c>'0'&&c<='9'){
@@ -498,7 +584,7 @@ int runloop(void){
 			}
 			break;
 		default:
-			printStatus("Unrecognised command '"+string(1,c)+'\'',red);
+			printStatus("Unrecognised command '"+Screen::prettychar(c)+'\'',red);
 		}
 	}
 	return 0;

@@ -61,9 +61,10 @@ char dec2hexChar(int n){
 
 string prettychar(char c){
 	if(c==0)return "\\0";
-	if(c==9)return "\t";
-	if(c==10)return "\n";
+	if(c==9)return "\\t";
+	if(c==10)return "\\n";
 	if(c<28)return string(1,'^')+(char)('A'+c-1);
+	if(c==127)return "\\b";
 	if(c<32)return string("\\x")+(char)dec2hexChar(c/16)+(char)dec2hexChar(c%16);
 	return string(1,c);
 }

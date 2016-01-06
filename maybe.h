@@ -12,20 +12,20 @@ public:
 		if(value)delete value;
 	}
 
-	T fromJust(void){
+	T fromJust(void) const {
 		return *value;
 	}
 
-	T& fromMaybe(T &def){
+	T fromMaybe(T &def) const {
 		if(value)return *value;
 		else return def;
 	}
 
-	bool isJust(void){
+	bool isJust(void) const{
 		return (bool)value;
 	}
 
-	bool isNothing(void){
+	bool isNothing(void) const{
 		return !value;
 	}
 

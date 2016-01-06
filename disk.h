@@ -7,7 +7,7 @@ using namespace std;
 
 namespace Disk {
 
-bool writeToFile(string fname,string s);
+Maybe<string> writeToFile(string fname,string s); //maybe returns an error string
 Maybe<string> readFromFile(string fname);
 
 } //namespace Disk

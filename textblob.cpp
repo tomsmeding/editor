@@ -98,34 +98,6 @@ char Textblob::at(unsigned int x,unsigned int y){
 	return data[y][x];
 }
 
-/*string Textblob::pretty(unsigned int fromy){
-	stringstream ss;
-	size_t y,len=data.size();
-	for(y=fromy;y<len;y++)ss<<prettyline(y);
-	return ss.str();
-}
-
-string Textblob::prettyline(unsigned int y){
-	stringstream ss;
-	for(const char c : data[y])ss<<prettychar(c);
-	return ss.str();
-}
-
-string Textblob::prettychar(unsigned int x,unsigned int y){
-	if(y>=data.size()||x>=data[y].size())
-	throw logic_error("Invalid x or y value in Textblob::prettychar");
-	return prettychar(data[y][x]);
-}
-
-string Textblob::prettychar(char c){
-	if(c==0)return "\\0";
-	if(c==9)return "    ";
-	if(c==10)return "\n";
-	if(c<28)return string(1,'^')+(char)('A'+c-1);
-	if(c<32)return string("\\x")+(char)dec2hexChar(c/16)+(char)dec2hexChar(c%16);
-	return string(1,c);
-}*/
-
 string to_string(Textblob &tb){
 	string res;
 	size_t len=0;

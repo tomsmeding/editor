@@ -24,11 +24,11 @@ bool Filebuffer::cansave(void){
 	return openpath.size()!=0;
 }
 
-bool Filebuffer::save(void){
+Maybe<string> Filebuffer::save(void){
 	return Disk::writeToFile(openpath,to_string(contents));
 }
 
-bool Filebuffer::saveas(string fname){
+Maybe<string> Filebuffer::saveas(string fname){
 	openpath=fname;
 	return save();
 }
@@ -44,11 +44,6 @@ bool Filebuffer::open(string fname,bool doredraw){
 	contents=Textblob(mcont.fromJust());
 	if(doredraw)Screen::redraw();
 	return true;
-}
-
-bool Filebuffer::keypress(Key){
-	Screen::redraw();
-	return false; //STUB
 }
 
 
@@ -78,7 +73,8 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 	int ndirty=0;
 	for(const Filebuffer &buffer : buffers){
 		basenames.push_back(basename(buffer.openpath));
-		const string &fname=basenames.back();
+		string &fname=basenames.back();
+		if(fname.size()==0)basenames.back()="<>";
 		if(acclen)acclen++; //space between tabs
 		acclen+=fname.size()?fname.size():1;
 		if(buffer.dirty){

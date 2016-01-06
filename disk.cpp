@@ -1,40 +1,37 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include "disk.h"
+#include "maybe.h"
 
 using namespace std;
 
 namespace Disk {
 
-bool writeToFile(string fname,string s){
+Maybe<string> writeToFile(string fname,string s){
 	char templ[32];
 	memcpy(templ,"/tmp/temp.XXXXXXXX",19);
 	int fd=mkstemp(templ);
-	if(fd<0){
-		perror("(writeToFile) mkstemp");
-		return false;
-	}
+	if(fd<0)
+		return Maybe<string>(string("mkstemp: ")+strerror(errno));
 	size_t cursor=0,written;
 	do {
 		written=write(fd,s.data()+cursor,s.size()-cursor);
 		if(written==0){
-			perror("(writeToFile) write");
+			const Maybe<string> mval=Maybe<string>(string("write: ")+strerror(errno));
 			close(fd);
-			return false;
+			return mval;
 		}
 		cursor+=written;
 	} while(cursor<s.size());
-	if(close(fd)){
-		perror("(writeToFile) close");
-		return false;
-	}
-	if(rename(templ,fname.data())){
-		perror("(writeToFile) rename");
-		return false;
-	}
-	return true;
+	if(close(fd))
+		return Maybe<string>(string("close: ")+strerror(errno));
+	if(rename(templ,fname.data()))
+		return Maybe<string>(string("rename: ")+strerror(errno));
+	return Maybe<string>::Nothing();
 }
 
 Maybe<string> readFromFile(string fname){

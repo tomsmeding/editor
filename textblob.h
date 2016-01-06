@@ -23,11 +23,5 @@ public:
 	string line(unsigned int y);
 	char at(unsigned int x,unsigned int y);
 
-	/*string pretty(unsigned int fromy=0);
-	string prettyline(unsigned int y);
-	string prettychar(unsigned int x,unsigned int y);
-
-	static string prettychar(char c);*/
-
 	friend string to_string(Textblob &tb);
 };

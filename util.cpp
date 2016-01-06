@@ -84,8 +84,11 @@ string join(vector<string> v,char sep){
 	for(const string &s : v)reslen+=s.size()+1;
 	reslen--;
 	res.reserve(reslen);
-	res+=v[0];
-	for(const string &s : v)res+=sep+s;
+	size_t nelem=v.size();
+	for(size_t i=0;i<nelem;i++){
+		if(i>0)res+=sep;
+		res+=v[i];
+	}
 	return res;
 }
 

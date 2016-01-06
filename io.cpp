@@ -234,7 +234,7 @@ string getLineStdin(unsigned int startx=0){
 				line.pop_back();
 				const string pret=Screen::prettychar(back);
 				for(unsigned int i=pret.size();i>0;i--)prettyline.pop_back();
-				if(prettyline.size()-scrollx<=0){
+				if(scrollx>0&&prettyline.size()-scrollx<=0){
 					scrollx=scrollx<maxlen*2/3?0:scrollx-maxlen*2/3;
 					cout<<gettput("hpa "+to_string(startx))
 					    <<(scrollx>0?"$":"")

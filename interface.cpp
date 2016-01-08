@@ -127,9 +127,9 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 
 	y++; x=0;
 	if(frontBuffer==-1){
-		addfilebuffer(false);
-		/*Screen::fillRect(screen,width,0,y,width,height-y,{textfg,screenbg});
-		return;*/
+		//addfilebuffer(false);
+		Screen::fillRect(screen,width,0,y,width,height-y,{textfg,screenbg});
+		return;
 	}
 	Filebuffer &fbuf=buffers[frontBuffer];
 	const unsigned int numberlen=log10(max(fbuf.contents.numlines(),(size_t)1))+1;

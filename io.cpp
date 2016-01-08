@@ -369,6 +369,43 @@ CommandRet editorCommandWq(vector<string> cmd,string cmd0,bool bang){
 	return CR_OK; //apparently Quit didn't quit
 }
 
+CommandRet editorCommandTabops(vector<string>,string cmd0,bool bang){
+	if(startswith("tabnext",cmd0,4)){
+		if(bang)return CR_NEXT;
+		if(Inter::buffers.size()<2)printStatus("No tab to switch to",red);
+		else {
+			Inter::frontBuffer=(Inter::frontBuffer+1)%Inter::buffers.size();
+			Screen::redraw();
+		}
+		return CR_OK;
+	} else if(startswith("tabprev",cmd0,4)||startswith("tabNext",cmd0,4)){
+		if(bang)return CR_NEXT;
+		if(Inter::buffers.size()<2)printStatus("No tab to switch to",red);
+		else {
+			Inter::frontBuffer=(Inter::frontBuffer+Inter::buffers.size()-1)
+		                       %Inter::buffers.size();
+			Screen::redraw();
+		}
+		return CR_OK;
+	} else if(startswith("tabclose",cmd0,4)){
+		if(Inter::frontBuffer==-1)printStatus("No tab to close",red);
+		else if(!bang&&Inter::buffers[Inter::frontBuffer].dirty)
+			printStatus("Unsaved changes in buffer, force close with :tabc!",red);
+		else {
+			Inter::buffers.erase(Inter::buffers.begin()+Inter::frontBuffer);
+			if(Inter::buffers.size()==0)Inter::frontBuffer=-1;
+			else if(Inter::frontBuffer>0)Inter::frontBuffer--;
+			Screen::redraw();
+		}
+		return CR_OK;
+	} else if(cmd0=="tabnew"||startswith("tabedit",cmd0,4)){
+		if(bang)return CR_NEXT;
+		Inter::addfilebuffer();
+		Screen::redraw();
+		return CR_OK;
+	} else return CR_NEXT;
+}
+
 CommandRet evalEditorCommand(string scmd){
 	bool bang=false;
 	vector<string> cmd=splitSmart(scmd,' ');
@@ -379,12 +416,13 @@ CommandRet evalEditorCommand(string scmd){
 		cmd0.pop_back();
 	}
 
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq   ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit  ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq    ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall  ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Tabops,cmd,cmd0,bang)
 
-	printStatus("Unrecognised command :"+join(cmd,' '),red);
+	printStatus("Unrecognised command :"+cmd[0],red);
 	return CR_OK;
 }
 

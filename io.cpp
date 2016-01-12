@@ -10,7 +10,9 @@
 #include <termios.h>
 #include <signal.h>
 #include "io.h"
+#include "screen.h"
 #include "interface.h"
+#include "script.h"
 
 using namespace std;
 
@@ -191,33 +193,6 @@ void clearMarkup(void){
 }
 
 
-void printStatus(string status,Colour clr=Inter::textfg,bool bold=false){
-	unsigned int scrwidth,scrheight;
-	tie(scrwidth,scrheight)=screensize();
-	gotoxy(0,scrheight-1);
-	switchColourFg(clr);
-	switchColourBg(Inter::screenbg);
-	if(bold)turnOnBold();
-	if(status.size()>scrwidth){
-		cout<<status.substr(0,scrwidth-3)<<"...";
-	} else {
-		cout<<status<<string(scrwidth-status.size(),' ');
-	}
-	if(bold)clearMarkup();
-	Screen::gotoFrontBufferCursor();
-	cout.flush();
-}
-
-void clearStatus(void){
-	unsigned int scrwidth,scrheight;
-	tie(scrwidth,scrheight)=screensize();
-	gotoxy(0,scrheight-1);
-	switchColourBg(Inter::screenbg);
-	cout<<string(scrwidth,' ');
-	Screen::gotoFrontBufferCursor();
-	cout.flush();
-}
-
 string getLineStdin(unsigned int startx=0){
 	//TODO more editing keys
 	unsigned int scrwidth,scrheight;
@@ -301,12 +276,12 @@ enum CommandRet{
 CommandRet editorCommandQuit(vector<string> cmd,string cmd0,bool bang){
 	if(!startswith("quit",cmd0))return CR_NEXT;
 	if(cmd.size()!=1){
-		printStatus(":q[uit] takes no arguments",red);
+		Inter::printStatus(":q[uit] takes no arguments",red);
 		return CR_OK;
 	}
 	if(Inter::frontBuffer==-1)return CR_QUIT;
 	if(!bang&&Inter::buffers[Inter::frontBuffer].dirty){
-		printStatus("Unsaved changes in buffer, force quit with :q[uit]!",red);
+		Inter::printStatus("Unsaved changes in buffer, force quit with :q[uit]!",red);
 		return CR_OK;
 	}
 	Inter::buffers.erase(Inter::buffers.begin()+Inter::frontBuffer);
@@ -320,13 +295,13 @@ CommandRet editorCommandQuit(vector<string> cmd,string cmd0,bool bang){
 CommandRet editorCommandQall(vector<string> cmd,string cmd0,bool bang){
 	if(!startswith("qall",cmd0,2))return CR_NEXT;
 	if(cmd.size()!=1){
-		printStatus(":qa[ll] takes no arguments",red);
+		Inter::printStatus(":qa[ll] takes no arguments",red);
 		return CR_OK;
 	}
 	if(!bang){
 		for(int i=Inter::buffers.size()-1;i>=0;i--){
 			if(!Inter::buffers[i].dirty)continue;
-			printStatus("Unsaved changes in this buffer, force quit all with :qa[ll]!",red);
+			Inter::printStatus("Unsaved changes in this buffer, force quit all with :qa[ll]!",red);
 			Inter::frontBuffer=i;
 			Screen::redraw();
 			return CR_OK;
@@ -339,25 +314,25 @@ CommandRet editorCommandQall(vector<string> cmd,string cmd0,bool bang){
 CommandRet editorCommandWrite(vector<string> cmd,string cmd0,bool bang){
 	if(!startswith("write",cmd0)||bang)return CR_NEXT;
 	if(cmd.size()>2){
-		printStatus(":w[rite] takes 0 or 1 argument",red);
+		Inter::printStatus(":w[rite] takes 0 or 1 argument",red);
 		return CR_OK;
 	}
 	if(Inter::frontBuffer==-1){
-		printStatus("Can't write no buffer",red);
+		Inter::printStatus("Can't write no buffer",red);
 		return CR_OK;
 	}
 	Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
 	if(fbuf.openpath.size()==0&&cmd.size()==1){
-		printStatus("Buffer not linked to a file, and no name given",red);
+		Inter::printStatus("Buffer not linked to a file, and no name given",red);
 		return CR_OK;
 	}
 	const Maybe<string> err=cmd.size()==2?fbuf.saveas(cmd[1]):fbuf.save();
 	if(err.isJust()){
-		printStatus("Couldn't write: "+err.fromJust(),red);
+		Inter::printStatus("Couldn't write: "+err.fromJust(),red);
 		return CR_OK;
 	}
 	fbuf.dirty=false;
-	printStatus("written");
+	Inter::printStatus("written");
 	Screen::redraw();
 	return CR_OK;
 }
@@ -372,7 +347,7 @@ CommandRet editorCommandWq(vector<string> cmd,string cmd0,bool bang){
 CommandRet editorCommandTabops(vector<string>,string cmd0,bool bang){
 	if(startswith("tabnext",cmd0,4)){
 		if(bang)return CR_NEXT;
-		if(Inter::buffers.size()<2)printStatus("No tab to switch to",red);
+		if(Inter::buffers.size()<2)Inter::printStatus("No tab to switch to",red);
 		else {
 			Inter::frontBuffer=(Inter::frontBuffer+1)%Inter::buffers.size();
 			Screen::redraw();
@@ -380,7 +355,7 @@ CommandRet editorCommandTabops(vector<string>,string cmd0,bool bang){
 		return CR_OK;
 	} else if(startswith("tabprev",cmd0,4)||startswith("tabNext",cmd0,4)){
 		if(bang)return CR_NEXT;
-		if(Inter::buffers.size()<2)printStatus("No tab to switch to",red);
+		if(Inter::buffers.size()<2)Inter::printStatus("No tab to switch to",red);
 		else {
 			Inter::frontBuffer=(Inter::frontBuffer+Inter::buffers.size()-1)
 		                       %Inter::buffers.size();
@@ -388,9 +363,9 @@ CommandRet editorCommandTabops(vector<string>,string cmd0,bool bang){
 		}
 		return CR_OK;
 	} else if(startswith("tabclose",cmd0,4)){
-		if(Inter::frontBuffer==-1)printStatus("No tab to close",red);
+		if(Inter::frontBuffer==-1)Inter::printStatus("No tab to close",red);
 		else if(!bang&&Inter::buffers[Inter::frontBuffer].dirty)
-			printStatus("Unsaved changes in buffer, force close with :tabc!",red);
+			Inter::printStatus("Unsaved changes in buffer, force close with :tabc!",red);
 		else {
 			Inter::buffers.erase(Inter::buffers.begin()+Inter::frontBuffer);
 			if(Inter::buffers.size()==0)Inter::frontBuffer=-1;
@@ -406,6 +381,28 @@ CommandRet editorCommandTabops(vector<string>,string cmd0,bool bang){
 	} else return CR_NEXT;
 }
 
+CommandRet editorCommandLuafile(vector<string> cmd,string cmd0,bool bang){
+	if(!startswith("luafile",cmd0,4)||bang)return CR_NEXT;
+	if(cmd.size()!=2){
+		Inter::printStatus(":luaf[ile] expects a filename parameter",red);
+		return CR_OK;
+	}
+	const Maybe<string> mval=Script::runfile(cmd[1]);
+	if(mval.isJust())Inter::printStatus(mval.fromJust(),red);
+	return CR_OK;
+}
+
+CommandRet editorCommandLua(vector<string> cmd,string cmd0,bool bang){
+	if(cmd0!="lua"||bang)return CR_NEXT;
+	if(cmd.size()<2){
+		Inter::printStatus(":lua expects code to be run",red);
+		return CR_OK;
+	}
+	const Maybe<string> mval=Script::runcode(join(vector<string>(cmd.begin()+1,cmd.end()),' '));
+	if(mval.isJust())Inter::printStatus(mval.fromJust(),red);
+	return CR_OK;
+}
+
 CommandRet evalEditorCommand(string scmd){
 	bool bang=false;
 	vector<string> cmd=splitSmart(scmd,' ');
@@ -416,13 +413,15 @@ CommandRet evalEditorCommand(string scmd){
 		cmd0.pop_back();
 	}
 
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit  ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq    ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall  ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Tabops,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit   ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write  ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq     ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall   ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Tabops ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Luafile,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Lua    ,cmd,cmd0,bang)
 
-	printStatus("Unrecognised command :"+cmd[0],red);
+	Inter::printStatus("Unrecognised command :"+cmd[0],red);
 	return CR_OK;
 }
 
@@ -433,7 +432,7 @@ void insertModeRunLoop(void){
 	if(Inter::frontBuffer==-1)
 		throw logic_error("Cannot enter insert mode in no buffer");
 	Screen::redraw();
-	printStatus("[INSERT]",Inter::textfg,true);
+	Inter::printStatus("[INSERT]",Inter::textfg,true);
 	Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
 	while(true){
 		unsigned char c=cin.get();
@@ -475,7 +474,7 @@ void insertModeRunLoop(void){
 		fbuf.curx=llen-1;
 		Screen::redraw();
 	}
-	clearStatus();
+	Inter::clearStatus();
 }
 
 void moveToBeginAfterIndent(Inter::Filebuffer &fbuf){
@@ -517,7 +516,7 @@ int runloop(void){
 			break;
 		}
 		case 'h': case 'j': case 'k': case 'l': case '0': case '^': case '$':
-			if(!fbuf)printStatus("No buffer open!",red);
+			if(!fbuf)Inter::printStatus("No buffer open!",red);
 			else switch(c){
 				case 'h':
 					if(fbuf->curx>=repcount)fbuf->curx-=repcount;
@@ -602,16 +601,16 @@ int runloop(void){
 			insertModeRunLoop();
 			break;
 		case '\x0C': //^L
-			clearStatus();
+			Inter::clearStatus();
 			Screen::redraw(true);
 			break;
 		case '\x16': //^V
-			printStatus("Press ^V again to enter verbose character debug mode!",red);
+			Inter::printStatus("Press ^V again to enter verbose character debug mode!",red);
 			if(cin.get()!='\x16'){
-				printStatus("k nope");
+				Inter::printStatus("k nope");
 				break;
 			}
-			printStatus("Entering verbose character mode!",red);
+			Inter::printStatus("Entering verbose character mode!",red);
 			usleep(1000000);
 			switchColourFg(Inter::textfg);
 			switchColourBg(Inter::screenbg);
@@ -622,7 +621,7 @@ int runloop(void){
 			}
 			break;
 		default:
-			printStatus("Unrecognised command '"+Screen::prettychar(c)+'\'',red);
+			Inter::printStatus("Unrecognised command '"+Screen::prettychar(c)+'\'',red);
 		}
 	}
 	return 0;

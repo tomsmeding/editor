@@ -6,6 +6,7 @@
 #include "io.h"
 #include "screen.h"
 #include "interface.h"
+#include "script.h"
 
 using namespace std;
 
@@ -30,9 +31,11 @@ int main(int argc,char **argv){
 	cerr<<string(5,'\n');
 	IO::initscreen();
 	screeninited=true;
-	int i;
+
+	Script::init();
+
 	try {
-		for(i=1;i<argc;i++)Inter::addfilebufferfile(argv[i]);
+		for(int i=1;i<argc;i++)Inter::addfilebufferfile(argv[i]);
 		return IO::runloop();
 	} catch(logic_error e){
 		IO::endscreen();

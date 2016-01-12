@@ -41,6 +41,9 @@ extern int frontBuffer;
 Filebuffer& addfilebuffer(bool doredraw=true);
 Filebuffer& addfilebufferfile(const string &fname,bool doredraw=true);
 
+void printStatus(string status,IO::Colour clr=textfg,bool bold=false);
+void clearStatus(void);
+
 void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int height);
 
 } //namespace Inter

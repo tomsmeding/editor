@@ -92,6 +92,16 @@ string join(vector<string> v,char sep){
 	return res;
 }
 
+/*template <class InputIt>
+string join(InputIt begin,InputIt end,char sep){
+	string res;
+	for(size_t i=0;begin!=end;begin++){
+		if(i>0)res+=sep;
+		res+=*begin;
+	}
+	return res;
+}*/
+
 
 chrono::time_point<chrono::steady_clock> programstart=chrono::steady_clock::now();
 

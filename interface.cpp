@@ -1,4 +1,5 @@
 #include <iostream>
+#include <tuple>
 #include <cmath>
 #include "interface.h"
 #include "disk.h"
@@ -48,18 +49,46 @@ bool Filebuffer::open(string fname,bool doredraw){
 
 
 Filebuffer& addfilebuffer(bool doredraw){
-	frontBuffer=buffers.size();
-	buffers.emplace_back();
+	frontBuffer++;
+	buffers.emplace(buffers.begin()+frontBuffer);
 	if(doredraw)Screen::redraw();
-	return buffers.back();
+	return buffers[frontBuffer];
 }
 
 Filebuffer& addfilebufferfile(const string &fname,bool doredraw){
-	frontBuffer=buffers.size();
-	buffers.emplace_back();
-	Filebuffer &buf=buffers.back();
-	buf.open(fname,doredraw);
+	if(frontBuffer==-1)frontBuffer=buffers.size();
+	buffers.emplace(buffers.begin()+frontBuffer);
+	Filebuffer &buf=buffers[frontBuffer];
+	buf.open(fname,false);
+	if(doredraw)Screen::redraw();
 	return buf;
+}
+
+void printStatus(string status,IO::Colour clr,bool bold){
+	unsigned int scrwidth,scrheight;
+	tie(scrwidth,scrheight)=IO::screensize();
+	IO::gotoxy(0,scrheight-1);
+	IO::switchColourFg(clr);
+	IO::switchColourBg(Inter::screenbg);
+	if(bold)IO::turnOnBold();
+	if(status.size()>scrwidth){
+		cout<<status.substr(0,scrwidth-3)<<"...";
+	} else {
+		cout<<status<<string(scrwidth-status.size(),' ');
+	}
+	if(bold)IO::clearMarkup();
+	Screen::gotoFrontBufferCursor();
+	cout.flush();
+}
+
+void clearStatus(void){
+	unsigned int scrwidth,scrheight;
+	tie(scrwidth,scrheight)=IO::screensize();
+	IO::gotoxy(0,scrheight-1);
+	IO::switchColourBg(Inter::screenbg);
+	cout<<string(scrwidth,' ');
+	Screen::gotoFrontBufferCursor();
+	cout.flush();
 }
 
 void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int height){

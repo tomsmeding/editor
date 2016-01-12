@@ -52,7 +52,7 @@ vector<string> split(string s,char sep){
 	vector<string> res;
 	size_t cursor=0,idx=s.find(sep);
 	while(idx!=string::npos){
-		res.push_back(s.substr(cursor,idx));
+		res.push_back(s.substr(cursor,idx-cursor));
 		cursor=idx+1;
 		idx=s.find(sep,cursor);
 	}
@@ -67,7 +67,7 @@ vector<string> splitSmart(string s,char sep){
 	if(cursor==len)return res;
 	idx=s.find(sep,cursor);
 	while(idx!=string::npos){
-		res.push_back(s.substr(cursor,idx));
+		res.push_back(s.substr(cursor,idx-cursor));
 		cursor=idx+1;
 		while(cursor<len&&s[cursor]==sep)cursor++;
 		if(cursor==len)return res;

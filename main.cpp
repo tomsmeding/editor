@@ -35,7 +35,8 @@ int main(int argc,char **argv){
 	Script::init();
 
 	try {
-		for(int i=1;i<argc;i++)Inter::addfilebufferfile(argv[i]);
+		if(argc==1)Inter::addfilebuffer();
+		else for(int i=1;i<argc;i++)Inter::addfilebufferfile(argv[i]);
 		return IO::runloop();
 	} catch(logic_error e){
 		IO::endscreen();

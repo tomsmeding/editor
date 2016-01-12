@@ -56,7 +56,7 @@ Filebuffer& addfilebuffer(bool doredraw){
 }
 
 Filebuffer& addfilebufferfile(const string &fname,bool doredraw){
-	if(frontBuffer==-1)frontBuffer=buffers.size();
+	frontBuffer++;
 	buffers.emplace(buffers.begin()+frontBuffer);
 	Filebuffer &buf=buffers[frontBuffer];
 	buf.open(fname,false);

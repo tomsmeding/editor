@@ -344,7 +344,7 @@ CommandRet editorCommandWq(vector<string> cmd,string cmd0,bool bang){
 	return CR_OK; //apparently Quit didn't quit
 }
 
-CommandRet editorCommandTabops(vector<string>,string cmd0,bool bang){
+CommandRet editorCommandTabops(vector<string> cmd,string cmd0,bool bang){
 	if(startswith("tabnext",cmd0,4)){
 		if(bang)return CR_NEXT;
 		if(Inter::buffers.size()<2)Inter::printStatus("No tab to switch to",red);
@@ -375,7 +375,9 @@ CommandRet editorCommandTabops(vector<string>,string cmd0,bool bang){
 		return CR_OK;
 	} else if(cmd0=="tabnew"||startswith("tabedit",cmd0,4)){
 		if(bang)return CR_NEXT;
-		Inter::addfilebuffer();
+		if(cmd.size()==2)Inter::addfilebufferfile(cmd[1]);
+		else if(cmd.size()==1)Inter::addfilebuffer();
+		else Inter::printStatus(":tabnew takes 0 or 1 argument",red);
 		Screen::redraw();
 		return CR_OK;
 	} else return CR_NEXT;

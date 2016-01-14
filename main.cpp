@@ -37,7 +37,10 @@ int main(int argc,char **argv){
 	try {
 		if(argc==1)Inter::addfilebuffer();
 		else for(int i=1;i<argc;i++)Inter::addfilebufferfile(argv[i]);
-		return IO::runloop();
+		const int ret=IO::runloop();
+		IO::endscreen();
+		screeninited=false;
+		return ret;
 	} catch(logic_error e){
 		IO::endscreen();
 		cerr.flush();

@@ -514,11 +514,18 @@ void moveToBeginAfterIndent(Inter::Filebuffer &fbuf){
 
 int runloop(void){
 	unsigned int repcount;
+	bool repcountset;
 	while(true){
-		Inter::Filebuffer *fbuf=Inter::frontBuffer!=-1?&Inter::buffers[Inter::frontBuffer]:NULL;
+		if(Inter::frontBuffer==-1){
+			if(Inter::buffers.size()==0)Inter::addfilebuffer();
+			else Inter::frontBuffer=Inter::buffers.size()-1;
+		}
+		Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
 		char c=cin.get();
 		repcount=1;
-		if(c>'0'&&c<='9'){
+		repcountset=false;
+		if(c>='1'&&c<='9'){
+			repcountset=true;
 			repcount=c-'0';
 			while(true){
 				c=cin.get();
@@ -539,89 +546,89 @@ int runloop(void){
 			Screen::gotoFrontBufferCursor();
 			break;
 		}
-		case 'h': case 'j': case 'k': case 'l': case '0': case '^': case '$':
-			if(!fbuf)Inter::printStatus("No buffer open!",red);
-			else switch(c){
-				case 'h':
-					if(fbuf->curx>=repcount)fbuf->curx-=repcount;
-					else {
-						fbuf->curx=0;
-						cout<<gettput("bel")<<flush;
-					}
-					break;
-				case 'j':{
-					const unsigned int nln=fbuf->contents.numlines();
-					if(fbuf->cury+repcount<nln)fbuf->cury+=repcount;
-					else {
-						fbuf->cury=nln==0?0:nln-1;
-						cout<<gettput("bel")<<flush;
-					}
-					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
-					if(llen==0)fbuf->curx=0;
-					else if(fbuf->curx>0&&fbuf->curx>=llen)fbuf->curx=llen-1;
-					break;
-				}
-				case 'k':{
-					if(fbuf->cury>=repcount)fbuf->cury-=repcount;
-					else {
-						fbuf->cury=0;
-						cout<<gettput("bel")<<flush;
-					}
-					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
-					if(llen==0)fbuf->curx=0;
-					else if(fbuf->curx>0&&fbuf->curx>=llen)fbuf->curx=llen-1;
-					break;
-				}
-				case 'l':{
-					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
-					if(fbuf->curx+repcount<llen)fbuf->curx+=repcount;
-					else {
-						fbuf->curx=llen==0?0:llen-1;
-						cout<<gettput("bel")<<flush;
-					}
-					break;
-				}
-				case '0':
-					fbuf->curx=0;
-					break;
-				case '^':{
-					moveToBeginAfterIndent(*fbuf);
-					break;
-				}
-				case '$':{
-					const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
-					fbuf->curx=llen==0?0:llen-1;
-					break;
-				}
+		case 'h':
+			if(fbuf.curx>=repcount)fbuf.curx-=repcount;
+			else {
+				fbuf.curx=0;
+				cout<<gettput("bel")<<flush;
 			}
 			Screen::redraw();
 			break;
+		case 'j':{
+			const unsigned int nln=fbuf.contents.numlines();
+			if(fbuf.cury+repcount<nln)fbuf.cury+=repcount;
+			else {
+				fbuf.cury=nln==0?0:nln-1;
+				cout<<gettput("bel")<<flush;
+			}
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			if(llen==0)fbuf.curx=0;
+			else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
+			Screen::redraw();
+			break;
+		}
+		case 'k':{
+			if(fbuf.cury>=repcount)fbuf.cury-=repcount;
+			else {
+				fbuf.cury=0;
+				cout<<gettput("bel")<<flush;
+			}
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			if(llen==0)fbuf.curx=0;
+			else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
+			Screen::redraw();
+			break;
+		}
+		case 'l':{
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			if(fbuf.curx+repcount<llen)fbuf.curx+=repcount;
+			else {
+				fbuf.curx=llen==0?0:llen-1;
+				cout<<gettput("bel")<<flush;
+			}
+			Screen::redraw();
+			break;
+		}
+		case '0':
+			fbuf.curx=0;
+			Screen::redraw();
+			break;
+		case '^':
+			moveToBeginAfterIndent(fbuf);
+			Screen::redraw();
+			break;
+		case '$':{
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			fbuf.curx=llen==0?0:llen-1;
+			Screen::redraw();
+			break;
+		}
 		case 'i':
 			insertModeRunLoop();
 			break;
 		case 'a':
-			fbuf->curx++;
+			fbuf.curx++;
 			insertModeRunLoop();
 			break;
 		case 'I':
-			moveToBeginAfterIndent(*fbuf);
+			moveToBeginAfterIndent(fbuf);
 			insertModeRunLoop();
 			break;
 		case 'A':{
-			const unsigned int llen=fbuf->contents.linelen(fbuf->cury);
-			fbuf->curx=llen;
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			fbuf.curx=llen;
 			insertModeRunLoop();
 			break;
 		}
 		case 'o':
-			fbuf->contents.insertLineBefore(fbuf->cury+1,"");
-			fbuf->cury++;
-			fbuf->curx=0;
+			fbuf.contents.insertLineBefore(fbuf.cury+1,"");
+			fbuf.cury++;
+			fbuf.curx=0;
 			insertModeRunLoop();
 			break;
 		case 'O':
-			fbuf->contents.insertLineBefore(fbuf->cury,"");
-			fbuf->curx=0;
+			fbuf.contents.insertLineBefore(fbuf.cury,"");
+			fbuf.curx=0;
 			insertModeRunLoop();
 			break;
 		case '\x0C': //^L

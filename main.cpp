@@ -12,6 +12,7 @@ using namespace std;
 
 bool screeninited=false;
 string closemessage;
+streambuf *cerrbuf;
 
 void siginthandler(int){
 	closemessage="Killed by ^C";
@@ -19,15 +20,17 @@ void siginthandler(int){
 }
 
 void atexitfunc(void){
+	cerr.rdbuf(cerrbuf);
 	if(screeninited)IO::endscreen();
 	if(closemessage.size())cout<<closemessage<<endl;
 }
 
 int main(int argc,char **argv){
 	signal(SIGINT,siginthandler);
-	atexit(atexitfunc);
+	cerrbuf=cerr.rdbuf();
 	ofstream logfile("editor.log");
 	cerr.rdbuf(logfile.rdbuf());
+	atexit(atexitfunc);
 	cerr<<string(5,'\n');
 	IO::initscreen();
 	screeninited=true;
@@ -37,10 +40,7 @@ int main(int argc,char **argv){
 	try {
 		if(argc==1)Inter::addfilebuffer();
 		else for(int i=1;i<argc;i++)Inter::addfilebufferfile(argv[i]);
-		const int ret=IO::runloop();
-		IO::endscreen();
-		screeninited=false;
-		return ret;
+		return IO::runloop();
 	} catch(logic_error e){
 		IO::endscreen();
 		cerr.flush();

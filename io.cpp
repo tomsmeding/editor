@@ -49,9 +49,9 @@ string gettput(string cap){
 	if(it!=tputcache.end())return it->second;
 	char *cmd;
 	asprintf(&cmd,"/usr/bin/tput %s",cap.data());
-	free(cmd);
 	cout.flush(); //flush for popen
 	FILE *proc=popen(cmd,"r");
+	free(cmd);
 	if(proc==NULL)return string();
 	char buf[64]; //should be enough
 	size_t nread=fread(buf,1,64,proc);

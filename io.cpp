@@ -100,7 +100,9 @@ void initscreen(void){
 		|ECHOCTL //don't visibly echo control characters (^V etc.)
 		|ECHONL //don't even echo a newline
 		|ICANON //disable canonical mode
+#ifdef NOKERNINFO
 		|NOKERNINFO //don't print a status line on ^T
+#endif
 		|IEXTEN //don't handle things like ^V specially
 		//|ISIG //disable ^C ^\ and ^Z
 		);

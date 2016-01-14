@@ -1,5 +1,6 @@
 #include <iostream>
 #include <tuple>
+#include <cstring>
 #include <cassert>
 #include "interface.h"
 #include "screen.h"

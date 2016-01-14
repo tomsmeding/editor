@@ -1,6 +1,7 @@
 #include <iostream>
 #include <tuple>
 #include <cmath>
+#include <climits>
 #include "interface.h"
 #include "disk.h"
 
@@ -92,9 +93,9 @@ void clearStatus(void){
 }
 
 void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int height){
-	unsigned int tabwidth;
+	/*unsigned int tabwidth;
 	if(buffers.size()*3-1>width)tabwidth=2;
-	else tabwidth=UINT_MAX;
+	else tabwidth=UINT_MAX;*/
 	unsigned int acclen=0;
 	double factor=1;
 	vector<string> basenames;

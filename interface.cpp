@@ -4,6 +4,7 @@
 #include <climits>
 #include "interface.h"
 #include "disk.h"
+#include "either.h"
 
 using namespace std;
 
@@ -41,9 +42,13 @@ bool Filebuffer::canopen(void){
 
 bool Filebuffer::open(string fname,bool doredraw){
 	openpath=fname;
-	Maybe<string> mcont=Disk::readFromFile(fname);
-	if(mcont.isNothing())return false;
-	contents=Textblob(mcont.fromJust());
+	Either<string,string> errcont=Disk::readFromFile(fname);
+	if(errcont.isLeft()){
+		printStatus(errcont.fromLeft(),IO::red);
+		dirty=true;
+	} else {
+		contents=Textblob(errcont.fromRight());
+	}
 	if(doredraw)Screen::redraw();
 	return true;
 }

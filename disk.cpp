@@ -6,7 +6,6 @@
 #include <cstring>
 #include <unistd.h>
 #include "disk.h"
-#include "maybe.h"
 
 using namespace std;
 
@@ -35,9 +34,9 @@ Maybe<string> writeToFile(string fname,string s){
 	return Maybe<string>::Nothing();
 }
 
-Maybe<string> readFromFile(string fname){
+Either<string,string> readFromFile(string fname){
 	ifstream f(fname,ios_base::in|ios_base::binary|ios_base::ate);
-	if(!f)return Maybe<string>::Nothing();
+	if(!f)return Either<string,string>::Left(strerror(errno));
 	size_t sz=f.tellg();
 	f.seekg(0,ios_base::beg);
 	string res;
@@ -45,7 +44,7 @@ Maybe<string> readFromFile(string fname){
 	res.resize(sz);
 	f.read(&*res.begin(),sz);
 	if(res[sz-1]!='\n')res+='\0';
-	return Maybe<string>(res);
+	return Either<string,string>::Right(res);
 }
 
 } //namespace Disk

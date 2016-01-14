@@ -64,7 +64,13 @@ string gettput(string cap){
 pair<unsigned int,unsigned int> screensizestore={80,25};
 
 pair<unsigned int,unsigned int> queryscreensize(void){
-	unsigned int w=stoi(gettput("cols")),h=stoi(gettput("lines"));
+	unsigned int w,h;
+	try {
+		w=stoi(gettput("cols"));
+		h=stoi(gettput("lines"));
+	} catch(...){
+		w=h=0;
+	}
 	if(w<1)w=80;
 	if(h<1)h=25;
 	return {w,h};
@@ -110,7 +116,11 @@ void initscreen(void){
 	tios.c_cc[VTIME]=0; //no timeout on reading, make it a blocking read
 	tcsetattr(0,TCSAFLUSH,&tios);
 
-	screencolours=stoi(gettput("colors"));
+	try {
+		screencolours=stoi(gettput("colors"));
+	} catch(...){
+		screencolours=16;
+	}
 	// if(screencolours>256*256*256)screencolours=256*256*256;
 	if(screencolours>256)screencolours=256; //we can't handle 24-bit true colour yet
 	else if(screencolours<16)screencolours=16;

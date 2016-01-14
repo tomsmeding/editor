@@ -383,6 +383,27 @@ CommandRet editorCommandTabops(vector<string> cmd,string cmd0,bool bang){
 	} else return CR_NEXT;
 }
 
+CommandRet editorCommandEdit(vector<string> cmd,string cmd0,bool bang){
+	if(!startswith("edit",cmd0))return CR_NEXT;
+	if(cmd.size()>2){
+		Inter::printStatus(":e[dit] 0 or 1 parameter",red);
+		return CR_OK;
+	}
+	if(Inter::buffers.size()==0||Inter::frontBuffer==-1){
+		if(cmd.size()==1)Inter::addfilebuffer();
+		else Inter::addfilebufferfile(cmd[1]);
+	} else {
+		Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
+		if(!bang&&fbuf.dirty){
+			Inter::printStatus("Unsaved changes in buffer, force re-edit with :e[dit]!",red);
+			return CR_OK;
+		}
+		if(cmd.size()==1)fbuf.open(fbuf.openpath);
+		else fbuf.open(cmd[1]);
+	}
+	return CR_OK;
+}
+
 CommandRet editorCommandLuafile(vector<string> cmd,string cmd0,bool bang){
 	if(!startswith("luafile",cmd0,4)||bang)return CR_NEXT;
 	if(cmd.size()!=2){
@@ -420,6 +441,7 @@ CommandRet evalEditorCommand(string scmd){
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq     ,cmd,cmd0,bang)
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall   ,cmd,cmd0,bang)
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Tabops ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Edit   ,cmd,cmd0,bang)
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Luafile,cmd,cmd0,bang)
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Lua    ,cmd,cmd0,bang)
 

@@ -601,9 +601,17 @@ int runloop(void){
 			Screen::redraw();
 			break;
 		}
-		case 'G':{ // TODO: add support for jumping to linenumber (just like :<number>)
+		case 'G':{
 			const unsigned int nln=fbuf.contents.numlines();
-			fbuf.cury=nln-1;
+			if(repcountset){
+				if (repcount>nln){
+					cout<<gettput("bel")<<flush;
+					break;
+				}
+				fbuf.cury=repcount-1;
+			} else {
+				fbuf.cury=nln-1;
+			}
 			fbuf.curx=0;
 			Screen::redraw();
 			break;

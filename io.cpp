@@ -285,6 +285,52 @@ enum CommandRet{
 		if(ret==CR_FAIL||ret==CR_QUIT)return ret; \
 	}
 
+CommandRet editorCommandColonNum(vector<string> cmd,string cmd0,bool bang){
+	if(bang||cmd0.size()==0)return CR_NEXT;
+	unsigned int target;
+	unsigned int i=1;
+	Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
+	unsigned int nln=fbuf.contents.numlines();
+	if(cmd0[0]=='.')target=fbuf.cury+1;
+	else if(cmd0[0]=='$')target=nln;
+	else if(cmd0[0]>='0'&&cmd0[0]<='9'){
+		target=cmd0[0]-'0';
+		while(i<cmd0.size()&&cmd0[i]>='0'&&cmd0[i]<='9'){
+			target=target*10+cmd0[i]-'0';
+			i++;
+		}
+	} else return CR_NEXT;
+	int sign,inc;
+	bool hasnumber;
+	while(i<cmd0.size()){
+		if(cmd0[i]=='+')sign=1;
+		else if(cmd0[i]=='-')sign=-1;
+		else return CR_NEXT;
+		i++;
+		inc=0;
+		hasnumber=false;
+		while(i<cmd0.size()&&cmd0[i]>='0'&&cmd0[i]<='9'){
+			inc=inc*10+cmd0[i]-'0';
+			i++;
+			hasnumber=true;
+		}
+		if(!hasnumber)inc=1;
+		target+=inc*sign;
+		if(target<=0||target>nln){
+			cout<<gettput("bel")<<flush;
+			Inter::printStatus("Line number "+to_string(target)+" out of range",red);
+			return CR_OK;
+		}
+	}
+	if(cmd.size()>1){
+		Inter::printStatus(":number doesn't take arguments yet",red);
+		return CR_OK;
+	}
+	fbuf.cury=target-1;
+	Screen::redraw();
+	return CR_OK;
+}
+
 CommandRet editorCommandQuit(vector<string> cmd,string cmd0,bool bang){
 	if(!startswith("quit",cmd0))return CR_NEXT;
 	if(cmd.size()!=1){
@@ -448,14 +494,15 @@ CommandRet evalEditorCommand(string scmd){
 		cmd0.pop_back();
 	}
 
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit   ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write  ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq     ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall   ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Tabops ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Edit   ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Luafile,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Lua    ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(ColonNum,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit    ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write   ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq      ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall    ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Tabops  ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Edit    ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Luafile ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Lua     ,cmd,cmd0,bang)
 
 	Inter::printStatus("Unrecognised command :"+cmd[0],red);
 	return CR_OK;

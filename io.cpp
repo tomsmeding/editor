@@ -601,6 +601,21 @@ int runloop(void){
 			Screen::redraw();
 			break;
 		}
+		case 'G':{
+			const unsigned int nln=fbuf.contents.numlines();
+			if(repcountset){
+				if (repcount>nln){
+					cout<<gettput("bel")<<flush;
+					break;
+				}
+				fbuf.cury=repcount-1;
+			} else {
+				fbuf.cury=nln-1;
+			}
+			fbuf.curx=0;
+			Screen::redraw();
+			break;
+		}
 		case '0':
 			fbuf.curx=0;
 			Screen::redraw();

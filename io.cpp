@@ -286,6 +286,10 @@ enum CommandRet{
 	}
 
 CommandRet editorCommandColonNum(vector<string> cmd,string cmd0,bool bang){
+	if(cmd0.size()==2&&!(cmd0[1]-50)&&cmd0[bang]+1+!!cmd0.size()==cmd0[0]){
+		Inter::printStatus("🐊");
+		return CR_OK;
+	}
 	if(bang||cmd0.size()==0)return CR_NEXT;
 	unsigned int target;
 	unsigned int i=1;

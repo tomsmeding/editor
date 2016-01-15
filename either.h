@@ -21,11 +21,11 @@ public:
 		return *rightv;
 	}
 
-	bool isLeft(void) const{
+	bool isLeft(void) const {
 		return (bool)leftv;
 	}
 
-	bool isRight(void) const{
+	bool isRight(void) const {
 		return (bool)rightv;
 	}
 

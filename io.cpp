@@ -601,6 +601,13 @@ int runloop(void){
 			Screen::redraw();
 			break;
 		}
+		case 'G':{ // TODO: add support for jumping to linenumber (just like :<number>)
+			const unsigned int nln=fbuf.contents.numlines();
+			fbuf.cury=nln-1;
+			fbuf.curx=0;
+			Screen::redraw();
+			break;
+		}
 		case '0':
 			fbuf.curx=0;
 			Screen::redraw();

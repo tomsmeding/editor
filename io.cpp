@@ -722,6 +722,8 @@ int runloop(void){
 				unsigned int newy=floor((repcount * nln + 99) / 100);
 				fbuf.cury=newy-1;
 				moveToBeginAfterIndent(fbuf);
+			} else if (repcountset) {
+				cout<<gettput("bel")<<flush;
 			} else {
 				// TODO: go to matching paren and stuff.
 			}

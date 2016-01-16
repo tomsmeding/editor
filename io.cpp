@@ -716,20 +716,18 @@ int runloop(void){
 			Screen::redraw();
 			break;
 		}
-		case '%':{
-			if (repcountset&&repcount<=100) {
+		case '%':
+			if(repcountset&&repcount<=100){
 				const unsigned int nln=fbuf.contents.numlines();
-				unsigned int newy=floor((repcount * nln + 99) / 100);
-				fbuf.cury=newy-1;
+				fbuf.cury=((repcount*nln+99)/100)-1;
 				moveToBeginAfterIndent(fbuf);
-			} else if (repcountset) {
+			} else if(repcountset){
 				cout<<gettput("bel")<<flush;
 			} else {
 				// TODO: go to matching paren and stuff.
 			}
 			Screen::redraw();
 			break;
-		}
 		case '$':{
 			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 			fbuf.curx=llen==0?0:llen-1;
@@ -779,8 +777,7 @@ int runloop(void){
 		case 't':{
 			bool jumped=jumpToNextOccurrenceOfChar(fbuf,cin.get(),1);
 			if(jumped){
-				const int loc=fbuf.curx-1;
-				fbuf.curx=(0>loc)?0:loc;
+				fbuf.curx=fbuf.curx==0?fbuf.curx:fbuf.curx-1;
 				Screen::redraw();
 			}
 			else cout<<gettput("bel")<<flush;
@@ -791,7 +788,7 @@ int runloop(void){
 			if(jumped){
 				const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 				const unsigned int loc=fbuf.curx+1;
-				fbuf.curx=(llen<loc)?llen:loc;
+				fbuf.curx=loc>=llen?(llen==0?0:llen-1):loc;
 				Screen::redraw();
 			}
 			else cout<<gettput("bel")<<flush;

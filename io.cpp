@@ -577,10 +577,10 @@ void moveToBeginAfterIndent(Inter::Filebuffer &fbuf){
 	else i=llen==0?0:llen-1;
 }
 
-bool jumpToNextOccurrenceOfChar(Inter::Filebuffer &fbuf,char c){
+bool jumpToNextOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int skip=0){
 	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 	unsigned int i;
-	for(i=fbuf.curx+1;i<llen;i++){
+	for(i=fbuf.curx+1+skip;i<llen;i++){
 		const char curchar=fbuf.contents.at(i,fbuf.cury);
 		if(curchar==c){
 			fbuf.curx=i;
@@ -771,6 +771,16 @@ int runloop(void){
 		case 'F':{
 			bool jumped=jumpToPreviousOccurrenceOfChar(fbuf,cin.get());
 			if(jumped)Screen::redraw();
+			else cout<<gettput("bel")<<flush;
+			break;
+		}
+		case 't':{
+			bool jumped=jumpToNextOccurrenceOfChar(fbuf,cin.get(),1);
+			if(jumped){
+				const int loc=fbuf.curx-1;
+				fbuf.curx=(0>loc)?0:loc;
+				Screen::redraw();
+			}
 			else cout<<gettput("bel")<<flush;
 			break;
 		}

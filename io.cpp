@@ -670,9 +670,11 @@ int runloop(void){
 			moveToBeginAfterIndent(fbuf);
 			Screen::redraw();
 			break;
-		case '_': {
-			if(repcountset){
+		case '_':
+		case '+': {
+			if(repcountset||c=='+'){
 				const unsigned int nln=fbuf.contents.numlines();
+				if(c=='_')repcount--;
 				unsigned int newy=min(fbuf.cury+repcount,nln-1); // don't move past end of buffer
 				fbuf.cury=newy;
 			}

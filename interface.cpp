@@ -48,6 +48,7 @@ bool Filebuffer::open(string fname,bool doredraw){
 		dirty=true;
 	} else {
 		contents=Textblob(errcont.fromRight());
+		dirty=false;
 	}
 	if(doredraw)Screen::redraw();
 	return true;
@@ -191,16 +192,18 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 				fbuf.screencurx=x;
 				fbuf.screencury=y;
 			}
-			const string pretty=line[i]=='\t'?string((x-editx+4)/4*4-(x-editx),' '):Screen::prettychar(line[i]);
+			const string pretty=line[i]=='\t'?string(4-(x-editx)%4,' '):Screen::prettychar(line[i]);
 			size_t plen=pretty.size();
-			if(x+pretty.size()>=width){
+			if(x+pretty.size()>width){
 				y++;
 				if(y>=height-1)break;
 				n=linenum+1;
 				for(x=0;x<editx;x++)screen[width*y+x].ch=' ';
 			}
-			for(j=0;j<plen;j++,x++)
+			for(j=0;j<plen;j++,x++){
 				screen[width*y+x].ch=pretty[j];
+				if(plen>1)screen[width*y+x].clr.fg=IO::yellow;
+			}
 		}
 		if(i==linelen&&linenum==fbuf.cury&&fbuf.curx==linelen){
 			fbuf.screencurx=x;

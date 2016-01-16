@@ -55,18 +55,20 @@ void gotoFrontBufferCursor(void){
 	} else IO::gotoxy(0,scrheight-1);
 }
 
-char dec2hexChar(int n){
+char dec2hexChar(unsigned int n){
 	if(n<10)return '0'+n;
-	else return 'a'+n;
+	else if(n<16)return 'a'+n;
+	else return '?';
 }
 
 string prettychar(char c){
 	if(c==0)return "\\0";
 	if(c==9)return "\\t";
 	if(c==10)return "\\n";
-	if(c<28)return string(1,'^')+(char)('A'+c-1);
 	if(c==127)return "\\b";
-	if(c<32)return string("\\x")+(char)dec2hexChar(c/16)+(char)dec2hexChar(c%16);
+	//if(c<0)return string(1,(char)(192+(((unsigned char)c)>>6)))+(char)(128+(((unsigned char)c)&0x3f)); //utf-8 fanciness
+	if(c>0&&c<28)return string(1,'^')+(char)('A'+c-1);
+	if(c<32)return string("\\x")+(char)dec2hexChar(((unsigned char)c)/16)+(char)dec2hexChar(((unsigned char)c)%16);
 	return string(1,c);
 }
 

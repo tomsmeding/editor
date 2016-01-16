@@ -655,15 +655,9 @@ int runloop(void){
 		}
 		case 'G':{
 			const unsigned int nln=fbuf.contents.numlines();
-			if(repcountset){
-				if (repcount>nln){
-					cout<<gettput("bel")<<flush;
-					break;
-				}
-				fbuf.cury=repcount-1;
-			} else {
-				fbuf.cury=nln-1;
-			}
+			unsigned int newy=nln-1;
+			if(repcountset&&repcount>0)newy=repcount-1;
+			fbuf.cury=min(newy,nln-1); // don't move past end of buffer
 			fbuf.curx=0;
 			Screen::redraw();
 			break;
@@ -679,7 +673,7 @@ int runloop(void){
 		case '_': {
 			if(repcountset){
 				const unsigned int nln=fbuf.contents.numlines();
-				unsigned int newy=min(fbuf.cury+repcount,nln); // don't move past end of buffer
+				unsigned int newy=min(fbuf.cury+repcount,nln-1); // don't move past end of buffer
 				fbuf.cury=newy;
 			}
 			moveToBeginAfterIndent(fbuf);

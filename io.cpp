@@ -590,9 +590,9 @@ bool jumpToNextOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int skip
 	return false;
 }
 
-bool jumpToPreviousOccurrenceOfChar(Inter::Filebuffer &fbuf,char c){
+bool jumpToPreviousOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int skip=0){
 	unsigned int i;
-	for(i=fbuf.curx-1;i>0;i--){
+	for(i=fbuf.curx-1-skip;i>0;i--){
 		const char curchar=fbuf.contents.at(i,fbuf.cury);
 		if(curchar==c){
 			fbuf.curx=i;
@@ -779,6 +779,17 @@ int runloop(void){
 			if(jumped){
 				const int loc=fbuf.curx-1;
 				fbuf.curx=(0>loc)?0:loc;
+				Screen::redraw();
+			}
+			else cout<<gettput("bel")<<flush;
+			break;
+		}
+		case 'T':{
+			bool jumped=jumpToPreviousOccurrenceOfChar(fbuf,cin.get(),1);
+			if(jumped){
+				const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+				const unsigned int loc=fbuf.curx+1;
+				fbuf.curx=(llen<loc)?llen:loc;
 				Screen::redraw();
 			}
 			else cout<<gettput("bel")<<flush;

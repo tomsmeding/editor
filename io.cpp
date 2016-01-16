@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <signal.h>
+#include <math.h>
 #include "io.h"
 #include "screen.h"
 #include "interface.h"
@@ -687,6 +688,18 @@ int runloop(void){
 			fbuf.cury=newy;
 
 			moveToBeginAfterIndent(fbuf);
+			Screen::redraw();
+			break;
+		}
+		case '%':{
+			if (repcountset&&repcount<=100) {
+				const unsigned int nln=fbuf.contents.numlines();
+				unsigned int newy=floor((repcount * nln + 99) / 100);
+				fbuf.cury=newy-1;
+				moveToBeginAfterIndent(fbuf);
+			} else {
+				// TODO: go to matching paren and stuff.
+			}
 			Screen::redraw();
 			break;
 		}

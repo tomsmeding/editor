@@ -577,6 +577,19 @@ void moveToBeginAfterIndent(Inter::Filebuffer &fbuf){
 	else i=llen==0?0:llen-1;
 }
 
+bool jumpToNextOccurrenceOfChar(Inter::Filebuffer &fbuf,char c){
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	unsigned int i;
+	for(i=fbuf.curx+1;i<llen;i++){
+		const char curchar=fbuf.contents.at(i,fbuf.cury);
+		if(curchar==c){
+			fbuf.curx=i;
+			return true;
+		}
+	}
+	return false;
+}
+
 int runloop(void){
 	unsigned int repcount;
 	bool repcountset;
@@ -737,6 +750,12 @@ int runloop(void){
 			fbuf.curx=0;
 			insertModeRunLoop();
 			break;
+		case 'f':{
+			bool jumped=jumpToNextOccurrenceOfChar(fbuf,cin.get());
+			if(jumped)Screen::redraw();
+			else cout<<gettput("bel")<<flush;
+			break;
+		}
 		case '\x0C': //^L
 			Inter::clearStatus();
 			Screen::redraw(true);

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -675,6 +676,16 @@ int runloop(void){
 			moveToBeginAfterIndent(fbuf);
 			Screen::redraw();
 			break;
+		case '_': {
+			if(repcountset){
+				const unsigned int nln=fbuf.contents.numlines();
+				unsigned int newy=min(fbuf.cury+repcount,nln); // don't move past end of buffer
+				fbuf.cury=newy;
+			}
+			moveToBeginAfterIndent(fbuf);
+			Screen::redraw();
+			break;
+		}
 		case '$':{
 			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 			fbuf.curx=llen==0?0:llen-1;

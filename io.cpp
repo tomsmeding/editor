@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -9,6 +10,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <signal.h>
+#include <math.h>
 #include "io.h"
 #include "screen.h"
 #include "interface.h"
@@ -575,6 +577,31 @@ void moveToBeginAfterIndent(Inter::Filebuffer &fbuf){
 	else i=llen==0?0:llen-1;
 }
 
+bool jumpToNextOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int skip=0){
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	unsigned int i;
+	for(i=fbuf.curx+1+skip;i<llen;i++){
+		const char curchar=fbuf.contents.at(i,fbuf.cury);
+		if(curchar==c){
+			fbuf.curx=i;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool jumpToPreviousOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int skip=0){
+	unsigned int i;
+	for(i=fbuf.curx-1-skip;i>0;i--){
+		const char curchar=fbuf.contents.at(i,fbuf.cury);
+		if(curchar==c){
+			fbuf.curx=i;
+			return true;
+		}
+	}
+	return false;
+}
+
 int runloop(void){
 	unsigned int repcount;
 	bool repcountset;
@@ -654,15 +681,9 @@ int runloop(void){
 		}
 		case 'G':{
 			const unsigned int nln=fbuf.contents.numlines();
-			if(repcountset){
-				if (repcount>nln){
-					cout<<gettput("bel")<<flush;
-					break;
-				}
-				fbuf.cury=repcount-1;
-			} else {
-				fbuf.cury=nln-1;
-			}
+			unsigned int newy=nln-1;
+			if(repcountset&&repcount>0)newy=repcount-1;
+			fbuf.cury=min(newy,nln-1); // don't move past end of buffer
 			fbuf.curx=0;
 			Screen::redraw();
 			break;
@@ -675,6 +696,40 @@ int runloop(void){
 			moveToBeginAfterIndent(fbuf);
 			Screen::redraw();
 			break;
+		case '_':
+		case '+': {
+			if(repcountset||c=='+'){
+				const unsigned int nln=fbuf.contents.numlines();
+				if(c=='_')repcount--;
+				unsigned int newy=min(fbuf.cury+repcount,nln-1); // don't move past end of buffer
+				fbuf.cury=newy;
+			}
+			moveToBeginAfterIndent(fbuf);
+			Screen::redraw();
+			break;
+		}
+		case '-': {
+			unsigned int newy=max((int)(fbuf.cury-repcount),0); // don't move past begin of buffer
+			fbuf.cury=newy;
+
+			moveToBeginAfterIndent(fbuf);
+			Screen::redraw();
+			break;
+		}
+		case '%':{
+			if (repcountset&&repcount<=100) {
+				const unsigned int nln=fbuf.contents.numlines();
+				unsigned int newy=floor((repcount * nln + 99) / 100);
+				fbuf.cury=newy-1;
+				moveToBeginAfterIndent(fbuf);
+			} else if (repcountset) {
+				cout<<gettput("bel")<<flush;
+			} else {
+				// TODO: go to matching paren and stuff.
+			}
+			Screen::redraw();
+			break;
+		}
 		case '$':{
 			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 			fbuf.curx=llen==0?0:llen-1;
@@ -709,6 +764,39 @@ int runloop(void){
 			fbuf.curx=0;
 			insertModeRunLoop();
 			break;
+		case 'f':{
+			bool jumped=jumpToNextOccurrenceOfChar(fbuf,cin.get());
+			if(jumped)Screen::redraw();
+			else cout<<gettput("bel")<<flush;
+			break;
+		}
+		case 'F':{
+			bool jumped=jumpToPreviousOccurrenceOfChar(fbuf,cin.get());
+			if(jumped)Screen::redraw();
+			else cout<<gettput("bel")<<flush;
+			break;
+		}
+		case 't':{
+			bool jumped=jumpToNextOccurrenceOfChar(fbuf,cin.get(),1);
+			if(jumped){
+				const int loc=fbuf.curx-1;
+				fbuf.curx=(0>loc)?0:loc;
+				Screen::redraw();
+			}
+			else cout<<gettput("bel")<<flush;
+			break;
+		}
+		case 'T':{
+			bool jumped=jumpToPreviousOccurrenceOfChar(fbuf,cin.get(),1);
+			if(jumped){
+				const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+				const unsigned int loc=fbuf.curx+1;
+				fbuf.curx=(llen<loc)?llen:loc;
+				Screen::redraw();
+			}
+			else cout<<gettput("bel")<<flush;
+			break;
+		}
 		case '\x0C': //^L
 			Inter::clearStatus();
 			Screen::redraw(true);

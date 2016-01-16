@@ -685,7 +685,7 @@ int runloop(void){
 				fbuf.cury=0;
 				fbuf.curx=0;
 				Screen::redraw();
-			}else{
+			} else {
 				Inter::printStatus("Unrecognised command '"+Screen::prettychar(c)+Screen::prettychar(c2)+'\'',red);
 				cout<<gettput("bel")<<flush;
 			}

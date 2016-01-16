@@ -679,6 +679,18 @@ int runloop(void){
 			Screen::redraw();
 			break;
 		}
+		case 'g':{
+			const char c2=cin.get();
+			if(c2=='g'){
+				fbuf.cury=0;
+				fbuf.curx=0;
+				Screen::redraw();
+			}else{
+				Inter::printStatus("Unrecognised command '"+Screen::prettychar(c)+Screen::prettychar(c2)+'\'',red);
+				cout<<gettput("bel")<<flush;
+			}
+			break;
+		}
 		case 'G':{
 			const unsigned int nln=fbuf.contents.numlines();
 			unsigned int newy=nln-1;

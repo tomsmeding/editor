@@ -682,6 +682,14 @@ int runloop(void){
 			Screen::redraw();
 			break;
 		}
+		case '-': {
+			unsigned int newy=max((int)(fbuf.cury-repcount),0); // don't move past begin of buffer
+			fbuf.cury=newy;
+
+			moveToBeginAfterIndent(fbuf);
+			Screen::redraw();
+			break;
+		}
 		case '$':{
 			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 			fbuf.curx=llen==0?0:llen-1;

@@ -43,7 +43,7 @@ Either<string,string> readFromFile(string fname){
 	res.reserve(sz+1); //space for possible newline
 	res.resize(sz);
 	f.read(&*res.begin(),sz);
-	if(res[sz-1]!='\n')res+='\0';
+	if(res[sz-1]!='\n')res+='\n';
 	return Either<string,string>::Right(res);
 }
 

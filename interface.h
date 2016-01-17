@@ -38,8 +38,10 @@ extern vector<Filebuffer> buffers;
 extern int frontBuffer;
 
 
-Filebuffer& addfilebuffer(bool doredraw=true);
-Filebuffer& addfilebufferfile(const string &fname,bool doredraw=true);
+Filebuffer* filebufferById(unsigned int id);
+
+Filebuffer& addFilebuffer(bool doredraw=true);
+Filebuffer& addFilebufferFile(const string &fname,bool doredraw=true);
 
 void printStatus(string status,IO::Colour clr=textfg,bool bold=false);
 void clearStatus(void);

@@ -446,8 +446,8 @@ CommandRet editorCommandTabops(vector<string> cmd,string cmd0,bool bang){
 		return CR_OK;
 	} else if(cmd0=="tabnew"||startswith("tabedit",cmd0,4)){
 		if(bang)return CR_NEXT;
-		if(cmd.size()==2)Inter::addfilebufferfile(cmd[1]);
-		else if(cmd.size()==1)Inter::addfilebuffer();
+		if(cmd.size()==2)Inter::addFilebufferFile(cmd[1]);
+		else if(cmd.size()==1)Inter::addFilebuffer();
 		else Inter::printStatus(":tabnew takes 0 or 1 argument",red);
 		Screen::redraw();
 		return CR_OK;
@@ -461,8 +461,8 @@ CommandRet editorCommandEdit(vector<string> cmd,string cmd0,bool bang){
 		return CR_OK;
 	}
 	if(Inter::buffers.size()==0||Inter::frontBuffer==-1){
-		if(cmd.size()==1)Inter::addfilebuffer();
-		else Inter::addfilebufferfile(cmd[1]);
+		if(cmd.size()==1)Inter::addFilebuffer();
+		else Inter::addFilebufferFile(cmd[1]);
 	} else {
 		Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
 		if(!bang&&fbuf.dirty){
@@ -650,7 +650,7 @@ int runloop(void){
 	bool repcountset;
 	while(true){
 		if(Inter::frontBuffer==-1){
-			if(Inter::buffers.size()==0)Inter::addfilebuffer();
+			if(Inter::buffers.size()==0)Inter::addFilebuffer();
 			else Inter::frontBuffer=Inter::buffers.size()-1;
 		}
 		Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];

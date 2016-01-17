@@ -55,14 +55,21 @@ bool Filebuffer::open(string fname,bool doredraw){
 }
 
 
-Filebuffer& addfilebuffer(bool doredraw){
+Filebuffer* filebufferById(unsigned int id){
+	unsigned int i;
+	unsigned int nb=buffers.size();
+	for(i=0;i<nb;i++)if(buffers[i].id==id)return &buffers[i];
+	return NULL;
+}
+
+Filebuffer& addFilebuffer(bool doredraw){
 	frontBuffer++;
 	buffers.emplace(buffers.begin()+frontBuffer);
 	if(doredraw)Screen::redraw();
 	return buffers[frontBuffer];
 }
 
-Filebuffer& addfilebufferfile(const string &fname,bool doredraw){
+Filebuffer& addFilebufferFile(const string &fname,bool doredraw){
 	frontBuffer++;
 	buffers.emplace(buffers.begin()+frontBuffer);
 	Filebuffer &buf=buffers[frontBuffer];
@@ -163,7 +170,7 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 
 	y++; x=0;
 	if(frontBuffer==-1){
-		//addfilebuffer(false);
+		//addFilebuffer(false);
 		Screen::fillRect(screen,width,0,y,width,height-y,{textfg,screenbg});
 		return;
 	}

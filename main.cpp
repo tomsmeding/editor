@@ -38,8 +38,8 @@ int main(int argc,char **argv){
 	Script::init();
 
 	try {
-		if(argc==1)Inter::addfilebuffer();
-		else for(int i=1;i<argc;i++)Inter::addfilebufferfile(argv[i]);
+		if(argc==1)Inter::addFilebuffer();
+		else for(int i=1;i<argc;i++)Inter::addFilebufferFile(argv[i]);
 		return IO::runloop();
 	} catch(logic_error e){
 		IO::endscreen();

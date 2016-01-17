@@ -24,6 +24,7 @@ extern Colour black,red,green,yellow,blue,magenta,cyan,white,ansic[8];
 
 
 pair<unsigned int,unsigned int> screensize(void);
+string gettput(string);
 void gotoxy(unsigned int x,unsigned int y);
 void initscreen(void);
 void endscreen(void);

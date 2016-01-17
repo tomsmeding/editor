@@ -561,8 +561,9 @@ void insertModeRunLoop(void){
 	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 	if(llen>0&&fbuf.curx>=llen){
 		fbuf.curx=llen-1;
-		Screen::redraw();
 	}
+	fbuf.curx=max((int)(fbuf.curx-1), 0);
+	Screen::redraw();
 	Inter::clearStatus();
 }
 

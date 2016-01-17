@@ -559,10 +559,8 @@ void insertModeRunLoop(void){
 		}
 	}
 	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
-	if(llen>0&&fbuf.curx>=llen){
-		fbuf.curx=llen-1;
-	}
-	fbuf.curx=max((int)(fbuf.curx-1), 0);
+	if(llen>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
+	else fbuf.curx=fbuf.curx==0?0:fbuf.curx-1;
 	Screen::redraw();
 	Inter::clearStatus();
 }

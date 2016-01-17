@@ -853,6 +853,10 @@ int runloop(void){
 			fbuf.contents.erase(fbuf.curx,fbuf.cury,fbuf.contents.linelen(fbuf.cury)-fbuf.curx);
 			insertModeRunLoop();
 			break;
+		case 'D':
+			fbuf.contents.erase(fbuf.curx,fbuf.cury,fbuf.contents.linelen(fbuf.cury)-fbuf.curx);
+			Screen::redraw();
+			break;
 		case '\x0C': //^L
 			Inter::clearStatus();
 			Screen::redraw(true);

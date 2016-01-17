@@ -490,6 +490,27 @@ CommandRet editorCommandLua(vector<string> cmd,string cmd0,bool bang){
 	return CR_OK;
 }
 
+static const char *kaas="36 .6,\n28 .17,\n20 .26,.\n12 .31,~~,  .\n10 .41,\n .,6 .44,\n20,:~=+5?+==~:11,~4?=5,.\n,:~~6:10,:+11?+=24,\n.:12~::7,:++6?=:12,5:10,.\n :17~3:23,7~==3~::5,\n :~~=~~3=~==13~::4,::13,10~3:5,.\n :6~=~==~4=22~3:11,::13,.\n :3~=~11=7~==~~=~=6+4=3~:25,\n :7~9=8~==3~=8+5=~27,.\n :6~==~~7=5~==3~=~~==3+?3+5=~4:25,\n :6~3=~==~4=~=3~3=~==3~=++3?3+5=~=~=3~::3,:8,:3,4:\n ,7~3=~~7=~==7+~~=++4?3+4=~9=3~::3,5:,4:,,.\n ,6~==4~4=~5=4?II+==8+5=~~14=3~16:,.\n  :5~16=+II4L~~4=4+4=~~26=~~8:,,\n  :5~=~~13=~+?4I3~:~~::8~10=+3=++4=+4?++==~~:,6:,\n  :5~17=~=3+~~==~~4:6~10=3+=+=7+3?++3=4~8:.\n  ,3~6=3+11=5~==~3=~~5:~12=10+=6+11=~~3:.\n  .~~6=??I??17=6+~~14=+=11+9=~==4+4=~~.\n3 ~6=+I5L+14=++?5+~10=+5=13+==~=~~==8+==~~\n3 .:4+=+L5$LLI11=+6?3+16=29+==~~\n4 ..,,:~??8I11=+?5I??++12=+==4+=24+==~:\n6 4.,,3:~~=++11=+?ILL3I??+11=+==30+==~:\n10 5.3,::=8+3=+IILLII3?7=+=++=+=31+=~:\n16 5.3,~??5+==+6?+4=+=++==34+==~:\n22 4.,,:~3?+3=3+4=6+=10+4=4+8=9+=~~:\n27 3.3,::??22+=5+==3+9=7+=~~,\n31 4.3,::=5?13+5?3+=++==II?++=~==5+=~~.\n36 4.3,::~I6?6+6?3+=+==3I??++3=3+=3~\n41 4.3,::~3I6?4I??++=+==ILLI??++==3+=3~\n46 4.3,::~5ILLII??5+=ILLII??+~=++=~~:\n50 5.,,4:~+II??6+=4LII?==++=~~:\n";
+CommandRet editorCommandKaas(vector<string>,string cmd0,bool){
+	if(cmd0!="kaas")return CR_NEXT;
+	Inter::clearStatus();
+	gotoxy(0,screensize().second-1);
+	switchColourFg(yellow);
+	size_t i,n;
+	for(i=0;kaas[i];i++){
+		if(kaas[i]>='0'&&kaas[i]<='9'){
+			n=kaas[i]-'0';
+			i++;
+			while(kaas[i]>='0'&&kaas[i]<='9')n=10*n+kaas[i++]-'0';
+			cout<<string(n,kaas[i]);
+		} else cout<<kaas[i];
+	}
+	cout.flush();
+	cin.get();
+	Screen::redraw(true);
+	return CR_OK;
+}
+
 CommandRet evalEditorCommand(string scmd){
 	bool bang=false;
 	vector<string> cmd=splitSmart(scmd,' ');
@@ -509,6 +530,7 @@ CommandRet evalEditorCommand(string scmd){
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Edit    ,cmd,cmd0,bang)
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Luafile ,cmd,cmd0,bang)
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Lua     ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Kaas    ,cmd,cmd0,bang)
 
 	Inter::printStatus("Unrecognised command :"+cmd[0],red);
 	return CR_OK;

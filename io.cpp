@@ -257,6 +257,13 @@ string getLineStdin(unsigned int startx=0){
 }
 
 
+void fillRestOfLine(unsigned int fromx,char c=' '){
+	unsigned int scrwidth=screensize().first;
+	scrwidth-=fromx;
+	while(scrwidth-->0)cout<<c;
+}
+
+
 string getEditorCommand(void){
 	unsigned int scrwidth,scrheight;
 	tie(scrwidth,scrheight)=screensize();
@@ -496,14 +503,31 @@ CommandRet editorCommandKaas(vector<string>,string cmd0,bool){
 	Inter::clearStatus();
 	gotoxy(0,screensize().second-1);
 	switchColourFg(yellow);
-	size_t i,n;
+	switchColourBg(Inter::screenbg);
+	size_t i,n,x=0;
 	for(i=0;kaas[i];i++){
 		if(kaas[i]>='0'&&kaas[i]<='9'){
 			n=kaas[i]-'0';
 			i++;
 			while(kaas[i]>='0'&&kaas[i]<='9')n=10*n+kaas[i++]-'0';
-			cout<<string(n,kaas[i]);
-		} else cout<<kaas[i];
+			if(kaas[i]=='\n'){
+				while(n-->0){
+					fillRestOfLine(x);
+					cout<<'\n';
+					x=0;
+				}
+			} else {
+				cout<<string(n,kaas[i]);
+				x+=n;
+			}
+		} else if(kaas[i]=='\n'){
+			fillRestOfLine(x);
+			cout<<'\n';
+			x=0;
+		} else {
+			cout<<kaas[i];
+			x++;
+		}
 	}
 	cout.flush();
 	cin.get();

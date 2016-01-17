@@ -15,8 +15,8 @@ string closemessage;
 streambuf *cerrbuf;
 
 void siginthandler(int){
-	closemessage="Killed by ^C";
-	exit(130);
+	Inter::printStatus("Use :q[uit] to exit editor.");
+	cout<<IO::gettput("bel")<<flush;
 }
 
 void atexitfunc(void){

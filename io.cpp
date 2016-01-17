@@ -849,6 +849,10 @@ int runloop(void){
 			else cout<<gettput("bel")<<flush;
 			break;
 		}
+		case 'C':
+			fbuf.contents.erase(fbuf.curx,fbuf.cury,fbuf.contents.linelen(fbuf.cury)-fbuf.curx);
+			insertModeRunLoop();
+			break;
 		case '\x0C': //^L
 			Inter::clearStatus();
 			Screen::redraw(true);

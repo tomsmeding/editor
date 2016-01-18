@@ -233,8 +233,10 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 			for(;x<width;x++)screen[width*y+x].ch=' ';
 		}
 		if(fbuf.screencury==height-1){
-			if(fbuf.scrolly==fbuf.cury)break;
-			fbuf.scrolly++;
+			if(fbuf.scrolly==fbuf.cury){
+				fbuf.curx=0;
+				printStatus("Hm, sorry. I can't draw your cursor that far into the line...",IO::red);
+			} else fbuf.scrolly++;
 		}
 	} while(fbuf.screencury==height-1);
 	//cerr<<"stabilised at screencurxy=("<<fbuf.screencurx<<','<<fbuf.screencury<<") scrolly="<<fbuf.scrolly<<endl;

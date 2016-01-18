@@ -855,6 +855,7 @@ int runloop(void){
 			break;
 		case 'D':
 			fbuf.contents.erase(fbuf.curx,fbuf.cury,fbuf.contents.linelen(fbuf.cury)-fbuf.curx);
+			if(fbuf.curx>0)fbuf.curx--;
 			Screen::redraw();
 			break;
 		case '\x0C': //^L

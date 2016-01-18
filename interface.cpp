@@ -232,6 +232,9 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 			}
 			for(;x<width;x++)screen[width*y+x].ch=' ';
 		}
+		for(;y<height-1;y++){
+			for(x=0;x<width;x++)screen[width*y+x].ch=' ';
+		}
 		if(fbuf.screencury==height-1){
 			if(fbuf.scrolly==fbuf.cury){
 				fbuf.curx=0;

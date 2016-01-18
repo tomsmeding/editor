@@ -859,6 +859,7 @@ int runloop(void){
 			Screen::redraw();
 			break;
 		case '\x0C': //^L
+			screensizestore=queryscreensize();
 			Inter::clearStatus();
 			Screen::redraw(true);
 			break;

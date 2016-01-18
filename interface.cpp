@@ -126,12 +126,9 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 		}
 	}
 	if(acclen>width)factor=(width-(buffers.size()-1-ndirty))/acclen;
-	//cerr<<"factor="<<factor<<endl;
 	unsigned int x=0,y=0,linenum;
 	unsigned int i,j;
 	unsigned int nbuf=buffers.size();
-	//for(i=0;i<nbuf;i++)cerr<<"basenames[i]="<<basenames[i]<<"  "; cerr<<endl;
-	//cerr<<"textfg = "<<(int)textfg.r<<' '<<(int)textfg.g<<' '<<(int)textfg.b<<endl;
 	for(i=0;i<nbuf;i++){
 		if(i!=0){
 			Screen::Screencell &cell=screen[width*y+x];
@@ -177,46 +174,70 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 	Filebuffer &fbuf=buffers[frontBuffer];
 	const unsigned int numberlen=log10(max(fbuf.contents.numlines(),(size_t)1))+1;
 	const unsigned int editx=numberlen+2;
-	linenum=fbuf.scrolly;
+
 	Screen::fillRect(screen,width,0,y,editx,height-y-1,{numberfg,editbg});
 	Screen::fillRect(screen,width,editx,y,width-editx,height-y-1,{textfg,editbg});
 	Screen::fillRect(screen,width,0,height-1,width,1,{textfg,screenbg});
+
+	//preliminary adjustments to scrolly to make the process below take less time
+	if(fbuf.scrolly>fbuf.cury)fbuf.scrolly=fbuf.cury;
+	else if(fbuf.cury>=fbuf.scrolly+height-2)fbuf.scrolly=fbuf.cury-height+3;
+
+	//preliminary, invalid values (file drawing won't place cursor on command bar)
 	fbuf.screencurx=0;
 	fbuf.screencury=height-1;
-	for(;y<height-1&&linenum<fbuf.contents.numlines();y++,linenum++){
-		int n=linenum+1;
-		screen[width*y].ch=' ';
-		for(x=editx-2;n;x--,n/=10)screen[width*y+x].ch='0'+n%10;
-		x=editx;
-		const string line=fbuf.contents.line(linenum);
-		const size_t linelen=line.size();
-		if(linelen==0&&linenum==fbuf.cury){
-			fbuf.screencurx=editx;
-			fbuf.screencury=y;
-		}
-		for(i=0;i<linelen;i++){
-			if(linenum==fbuf.cury&&i==fbuf.curx){
+
+	//since we guaranteed above that cury>scrolly, we just need to progressively move down
+	// the view until the cursor is visible
+	unsigned int xbak=x,ybak=y;
+	do {
+		x=xbak; y=ybak;
+		//cerr<<"curxy=("<<fbuf.curx<<','<<fbuf.cury<<") scrolly="<<fbuf.scrolly<<" do pass"<<endl;
+		linenum=fbuf.scrolly;
+		for(;y<height-1&&linenum<fbuf.contents.numlines();y++,linenum++){
+			int n=linenum+1;
+			screen[width*y].ch=' ';
+			for(x=editx-2;n;x--,n/=10)screen[width*y+x].ch='0'+n%10;
+			x=editx;
+			const string line=fbuf.contents.line(linenum);
+			const size_t linelen=line.size();
+			/*if(linelen==0&&linenum==fbuf.cury){
+				fbuf.screencurx=editx;
+				fbuf.screencury=y;
+			}*/
+			i=0;
+			for(i=0;i<linelen;i++){
+				if(linenum==fbuf.cury&&i==fbuf.curx){
+					fbuf.screencurx=x;
+					fbuf.screencury=y;
+				}
+				const string pretty=line[i]=='\t'?string(4-(x-editx)%4,' '):Screen::prettychar(line[i]);
+				size_t plen=pretty.size();
+				if(x+pretty.size()>width){
+					for(;x<width;x++)screen[width*y+x].ch=' ';
+					y++;
+					if(y>=height-1)break;
+					n=linenum+1;
+					for(x=0;x<editx;x++)screen[width*y+x].ch=' ';
+				}
+				for(j=0;j<plen;j++,x++){
+					screen[width*y+x].ch=pretty[j];
+					if(plen>1)screen[width*y+x].clr.fg=IO::yellow;
+					else screen[width*y+x].clr.fg=textfg;
+				}
+			}
+			if(i==linelen&&linenum==fbuf.cury&&fbuf.curx==linelen){
 				fbuf.screencurx=x;
 				fbuf.screencury=y;
 			}
-			const string pretty=line[i]=='\t'?string(4-(x-editx)%4,' '):Screen::prettychar(line[i]);
-			size_t plen=pretty.size();
-			if(x+pretty.size()>width){
-				y++;
-				if(y>=height-1)break;
-				n=linenum+1;
-				for(x=0;x<editx;x++)screen[width*y+x].ch=' ';
-			}
-			for(j=0;j<plen;j++,x++){
-				screen[width*y+x].ch=pretty[j];
-				if(plen>1)screen[width*y+x].clr.fg=IO::yellow;
-			}
+			for(;x<width;x++)screen[width*y+x].ch=' ';
 		}
-		if(i==linelen&&linenum==fbuf.cury&&fbuf.curx==linelen){
-			fbuf.screencurx=x;
-			fbuf.screencury=y;
+		if(fbuf.screencury==height-1){
+			if(fbuf.scrolly==fbuf.cury)break;
+			fbuf.scrolly++;
 		}
-	}
+	} while(fbuf.screencury==height-1);
+	//cerr<<"stabilised at screencurxy=("<<fbuf.screencurx<<','<<fbuf.screencury<<") scrolly="<<fbuf.scrolly<<endl;
 }
 
 }

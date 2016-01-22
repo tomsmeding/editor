@@ -24,7 +24,7 @@ int osCopyFile(const char *from,const char *to){
 	int in,out;
 	if((in=open(from,O_RDONLY))==-1)
 		return -1;
-	if((out=open(to,O_RDWR|O_CREAT,0666))==-1){
+	if((out=open(to,O_RDWR|O_CREAT|O_TRUNC,0666))==-1){
 		close(in);
 		return -1;
 	}

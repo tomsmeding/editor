@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <utility>
 
 using namespace std;
@@ -34,6 +35,8 @@ void switchColourBg(const Colour &clr);
 void switchColourUl(bool ul);
 void turnOnBold(void); //because freakin terminals don't support turning OFF bold
 void clearMarkup(void);
+
+string getLineStdin(unsigned int startx=0);
 
 int runloop(void);
 

@@ -6,6 +6,7 @@
 #include "screen.h"
 #include "maybe.h"
 #include "util.h"
+#include "io.h"
 
 using namespace std;
 
@@ -45,6 +46,7 @@ Filebuffer& addFilebufferFile(const string &fname,bool doredraw=true);
 
 void printStatus(string status,IO::Colour clr=textfg,bool bold=false);
 void clearStatus(void);
+string askQuestion(string question,const IO::Colour &clr);
 
 void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int height);
 

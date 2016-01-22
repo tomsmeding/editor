@@ -105,6 +105,26 @@ void clearStatus(void){
 	cout.flush();
 }
 
+string askQuestion(string question,const IO::Colour &clr){
+	unsigned int scrwidth,scrheight;
+	tie(scrwidth,scrheight)=IO::screensize();
+	IO::gotoxy(0,scrheight-1);
+	IO::switchColourFg(clr);
+	IO::switchColourBg(Inter::screenbg);
+	if(question.size()>scrwidth-10){
+		cout<<question.substr(0,scrwidth-13)<<"...";
+	} else {
+		cout<<question<<string(scrwidth-question.size(),' ');
+	}
+	IO::gotoxy(question.size(),scrheight-1);
+	cout.flush();
+	IO::clearMarkup();
+	string response=IO::getLineStdin(question.size());
+	Screen::gotoFrontBufferCursor();
+	cout.flush();
+	return response;
+}
+
 void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int height){
 	/*unsigned int tabwidth;
 	if(buffers.size()*3-1>width)tabwidth=2;

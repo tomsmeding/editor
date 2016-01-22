@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include "disk.h"
+#include "interface.h"
 
 #if defined(__APPLE__)||defined(__FreeBSD__)
 #include <copyfile.h>
@@ -30,62 +31,65 @@ string resolveTilde(const string &path){
 	return pwd->pw_dir+path.substr(namelen+1);
 }
 
-//http://stackoverflow.com/a/2180157
-int osCopyFile(const char *from,const char *to){
-	int in,out;
-	if((in=open(from,O_RDONLY))==-1)
-		return -1;
-	if((out=open(to,O_RDWR|O_CREAT|O_TRUNC,0666))==-1){
-		close(in);
-		return -1;
-	}
-#if defined(__APPLE__)||defined(__FreeBSD__)
-	int res=fcopyfile(in,out,0,COPYFILE_ALL);
-#else
-	off_t ncopied=0;
-	struct stat st;
-	fstat(in,&st);
-	int res=sendfile(out,in,&ncopied,st.st_size);
-#endif
-
-	close(in);
-	close(out);
-	return res;
-}
-
-Maybe<string> writeToFile(string fname,string s){
+Maybe<string> writeToFile(string fname,const string &s){
 	fname=resolveTilde(fname);
-	char tempfname[32];
-	memcpy(tempfname,"/tmp/temp.XXXXXXXX",19);
-	int fd=mkstemp(tempfname);
-	if(fd<0)
-		return Maybe<string>(string("mkstemp: ")+strerror(errno));
-	size_t cursor=0,written;
+	const char *data=s.data();
+	const size_t slen=s.size();
+	size_t cursor;
+	int written;
+	int fd;
+
+	size_t lastslash=fname.rfind('/');
+	string tempfname=lastslash==string::npos?
+	                 ".editor-"+fname+'~':
+	                 fname.substr(0,lastslash+1)+".editor-"+fname.substr(lastslash+1)+'~';
+	if(unlink(tempfname.data())==-1&&errno!=ENOENT)
+		goto writeToFileSimple;
+	fd=open(tempfname.data(),O_WRONLY|O_CREAT|O_EXCL,0666);
+	if(fd==-1)
+		goto writeToFileSimple;
+	cursor=0;
 	do {
-		written=write(fd,s.data()+cursor,s.size()-cursor);
-		if(written==0){
-			const Maybe<string> mval=Maybe<string>(string("write: ")+strerror(errno));
+		written=write(fd,data+cursor,slen-cursor);
+		if(written<1){
 			close(fd);
-			return mval;
+			unlink(tempfname.data());
+			goto writeToFileSimple;
 		}
 		cursor+=written;
-	} while(cursor<s.size());
-	if(close(fd))
-		return Maybe<string>(string("close: ")+strerror(errno));
-	if(rename(tempfname,fname.data())){
-		if(errno!=EXDEV)
-			return Maybe<string>(string("rename: ")+strerror(errno));
-		//cross-device rename didn't work, fallback to copying
-		if(osCopyFile(tempfname,fname.data())!=-1)
-			return Maybe<string>::Nothing();
-		//copying didn't work, fall back to direct writing
-		ofstream outf(fname);
-		if(!outf)
-			return Maybe<string>("Cannot open file '"+fname+'\'');
-		outf<<s;
-		outf.close();
-		return Maybe<string>::Nothing();
+	} while(cursor<slen);
+	if(close(fd)){
+		unlink(tempfname.data());
+		goto writeToFileSimple;
 	}
+	if(rename(tempfname.data(),fname.data())){
+		unlink(tempfname.data());
+		goto writeToFileSimple;
+	}
+	return Maybe<string>::Nothing();
+
+writeToFileSimple:
+	string response=Inter::askQuestion("Cannot write atomically; write directly? (unsafe!) [y/N] ",IO::red);
+	if(response.size()==0||(response[0]!='y'&&response[0]!='Y'))
+		return Maybe<string>("(canceled)");
+	fd=open(fname.data(),O_WRONLY|O_CREAT);
+	if(fd==-1)
+		return Maybe<string>("Cannot open file '"+fname+'\'');
+	cursor=0;
+	do {
+		written=write(fd,data+cursor,slen-cursor);
+		if(written==-1){
+			const Maybe<string> mval(string("Error while writing file! ")+strerror(errno));
+			close(fd);
+			return mval;
+		} else if(written==0){
+			close(fd);
+			return Maybe<string>("Error while writing file; disk full?");
+		}
+		cursor+=written;
+	} while(cursor<slen);
+	if(close(fd))
+		return Maybe<string>(string("Could not close file: ")+strerror(errno));
 	return Maybe<string>::Nothing();
 }
 

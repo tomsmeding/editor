@@ -207,7 +207,7 @@ void clearMarkup(void){
 }
 
 
-string getLineStdin(unsigned int startx=0){
+string getLineStdin(unsigned int startx){
 	//TODO more editing keys
 	unsigned int scrwidth,scrheight;
 	tie(scrwidth,scrheight)=screensize();

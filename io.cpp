@@ -144,7 +144,7 @@ unsigned int sqColourDiff(const Colour &a,const Colour &b){
 
 unsigned int nearestAnsi(const Colour &clr){
 	unsigned int mind=sqColourDiff(clr,ansiTable[0]),d;
-	int minat;
+	int minat=0;
 	int i;
 	for(i=1;i<16;i++){
 		d=sqColourDiff(clr,ansiTable[i]);

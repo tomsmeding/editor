@@ -469,8 +469,10 @@ CommandRet editorCommandEdit(vector<string> cmd,string cmd0,bool bang){
 			Inter::printStatus("Unsaved changes in buffer, force re-edit with :e[dit]!",red);
 			return CR_OK;
 		}
-		if(cmd.size()==1)fbuf.open(fbuf.openpath);
-		else fbuf.open(cmd[1]);
+		if(cmd.size()==1)fbuf.open(fbuf.openpath,false);
+		else fbuf.open(cmd[1],false);
+		fbuf.curx=fbuf.cury=0;
+		Screen::redraw();
 	}
 	return CR_OK;
 }

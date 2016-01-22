@@ -829,11 +829,13 @@ int runloop(void){
 			fbuf.contents.insertLineBefore(fbuf.cury+1,"");
 			fbuf.cury++;
 			fbuf.curx=0;
+			fbuf.dirty=true;
 			insertModeRunLoop();
 			break;
 		case 'O':
 			fbuf.contents.insertLineBefore(fbuf.cury,"");
 			fbuf.curx=0;
+			fbuf.dirty=true;
 			insertModeRunLoop();
 			break;
 		case 'f':{
@@ -868,15 +870,21 @@ int runloop(void){
 			else cout<<gettput("bel")<<flush;
 			break;
 		}
-		case 'C':
-			fbuf.contents.erase(fbuf.curx,fbuf.cury,fbuf.contents.linelen(fbuf.cury)-fbuf.curx);
+		case 'C':{
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			if(llen!=0)fbuf.dirty=true;
+			fbuf.contents.erase(fbuf.curx,fbuf.cury,llen-fbuf.curx);
 			insertModeRunLoop();
 			break;
-		case 'D':
-			fbuf.contents.erase(fbuf.curx,fbuf.cury,fbuf.contents.linelen(fbuf.cury)-fbuf.curx);
+		}
+		case 'D':{
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			if(llen!=0)fbuf.dirty=true;
+			fbuf.contents.erase(fbuf.curx,fbuf.cury,llen-fbuf.curx);
 			if(fbuf.curx>0)fbuf.curx--;
 			Screen::redraw();
 			break;
+		}
 		case '\x0C': //^L
 			screensizestore=queryscreensize();
 			Inter::clearStatus();

@@ -180,6 +180,10 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 	Screen::fillRect(screen,width,0,height-1,width,1,{textfg,screenbg});
 
 	//preliminary adjustments to scrolly to make the process below take less time
+	const unsigned int nln=fbuf.contents.numlines(),
+	                   llen=fbuf.contents.linelen(fbuf.cury);
+	if(fbuf.cury>=nln)fbuf.cury=nln-1;
+	if(fbuf.curx>llen)fbuf.curx=llen;
 	if(fbuf.scrolly>fbuf.cury)fbuf.scrolly=fbuf.cury;
 	else if(fbuf.cury>=fbuf.scrolly+height-2)fbuf.scrolly=fbuf.cury-height+3;
 

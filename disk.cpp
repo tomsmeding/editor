@@ -5,16 +5,47 @@
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
+#include <fcntl.h>
 #include "disk.h"
+
+#if defined(__APPLE__)||defined(__FreeBSD__)
+#include <copyfile.h>
+#else
+#include <sys/stat.h>
+#include <sys/sendfile.h>
+#endif
 
 using namespace std;
 
 namespace Disk {
 
+//http://stackoverflow.com/a/2180157
+int osCopyFile(const char *from,const char *to){
+	int in,out;
+	if((in=open(from,O_RDONLY))==-1)
+		return -1;
+	if((out=open(to,O_RDWR|O_CREAT,0666))==-1){
+		close(in);
+		return -1;
+	}
+#if defined(__APPLE__)||defined(__FreeBSD__)
+	int res=fcopyfile(in,out,0,COPYFILE_ALL);
+#else
+	off_t ncopied=0;
+	struct stat st;
+	fstat(in,&st);
+	int res=sendfile(out,in,&ncopied,st.st_size);
+#endif
+
+	close(in);
+	close(out);
+	return res;
+}
+
 Maybe<string> writeToFile(string fname,string s){
-	char templ[32];
-	memcpy(templ,"/tmp/temp.XXXXXXXX",19);
-	int fd=mkstemp(templ);
+	char tempfname[32];
+	memcpy(tempfname,"/tmp/temp.XXXXXXXX",19);
+	int fd=mkstemp(tempfname);
 	if(fd<0)
 		return Maybe<string>(string("mkstemp: ")+strerror(errno));
 	size_t cursor=0,written;
@@ -29,8 +60,20 @@ Maybe<string> writeToFile(string fname,string s){
 	} while(cursor<s.size());
 	if(close(fd))
 		return Maybe<string>(string("close: ")+strerror(errno));
-	if(rename(templ,fname.data()))
-		return Maybe<string>(string("rename: ")+strerror(errno));
+	if(rename(tempfname,fname.data())){
+		if(errno!=EXDEV)
+			return Maybe<string>(string("rename: ")+strerror(errno));
+		//cross-device rename didn't work, fallback to copying
+		if(osCopyFile(tempfname,fname.data())!=-1)
+			return Maybe<string>::Nothing();
+		//copying didn't work, fall back to direct writing
+		ofstream outf(fname);
+		if(!outf)
+			return Maybe<string>("Cannot open file '"+fname+'\'');
+		outf<<s;
+		outf.close();
+		return Maybe<string>::Nothing();
+	}
 	return Maybe<string>::Nothing();
 }
 

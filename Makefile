@@ -2,8 +2,9 @@ CXX := g++
 UNAME := $(shell uname)
 CXXFLAGS := -Wall -Wextra -std=c++11 -O2
 ifeq ($(UNAME),Darwin)
-	CXXFLAGS += -I/usr/local/Cellar/lua53/5.3.1_1/include/lua-5.3
-	LDFLAGS := -L/usr/local/Cellar/lua53/5.3.1_1/lib/ -llua.5.3
+	LUA := $(wildcard /usr/local/Cellar/lua53/5.3.*)
+	CXXFLAGS += -I$(LUA)/include/lua-5.3
+	LDFLAGS := -L$(LUA)/lib/ -llua.5.3
 else  #linux?
 	CXXFLAGS +=
 	LDFLAGS := -llua -ldl

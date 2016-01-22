@@ -6,6 +6,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include "disk.h"
 
 #if defined(__APPLE__)||defined(__FreeBSD__)
@@ -18,6 +19,16 @@
 using namespace std;
 
 namespace Disk {
+
+string resolveTilde(const string &path){
+	if(path.size()==0||path[0]!='~')return path;
+	if(path.size()==1)return getenv("HOME");
+	if(path[1]=='/')return getenv("HOME")+path.substr(1);
+	size_t namelen=path.find('/',1);
+	if(namelen!=string::npos)namelen--;
+	struct passwd *pwd=getpwnam(path.substr(1,namelen).data());
+	return pwd->pw_dir+path.substr(namelen+1);
+}
 
 //http://stackoverflow.com/a/2180157
 int osCopyFile(const char *from,const char *to){
@@ -43,6 +54,7 @@ int osCopyFile(const char *from,const char *to){
 }
 
 Maybe<string> writeToFile(string fname,string s){
+	fname=resolveTilde(fname);
 	char tempfname[32];
 	memcpy(tempfname,"/tmp/temp.XXXXXXXX",19);
 	int fd=mkstemp(tempfname);
@@ -78,6 +90,7 @@ Maybe<string> writeToFile(string fname,string s){
 }
 
 Either<string,string> readFromFile(string fname){
+	fname=resolveTilde(fname);
 	ifstream f(fname,ios_base::in|ios_base::binary|ios_base::ate);
 	if(!f)return Either<string,string>::Left(strerror(errno));
 	size_t sz=f.tellg();

@@ -8,6 +8,7 @@ using namespace std;
 
 namespace Disk {
 
+string canonicalisePath(const string &path);
 Maybe<string> writeToFile(string fname,string s); //maybe returns an error string
 Either<string,string> readFromFile(string fname);
 

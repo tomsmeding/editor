@@ -689,6 +689,10 @@ bool jumpToPreviousOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int 
 	return false;
 }
 
+bool isWordChar(char c,int llen){
+	return isalnum(c)||c=='_'||llen==0;
+}
+
 int runloop(void){
 	unsigned int repcount;
 	bool repcountset;
@@ -763,6 +767,20 @@ int runloop(void){
 				fbuf.curx=llen==0?0:llen-1;
 				cout<<gettput("bel")<<flush;
 			}
+			Screen::redraw();
+			break;
+		}
+		case 'w': {
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			unsigned int i;
+			for(i=fbuf.curx;i<llen;i++){
+				const char curchar=fbuf.contents.at(i,fbuf.cury);
+				if(!isWordChar(curchar, llen)&&--repcount==0) {
+					fbuf.curx=i+1;
+					break;
+				}
+			}
+			fbuf.curx=fbuf.curx>=llen?llen-1:fbuf.curx;
 			Screen::redraw();
 			break;
 		}

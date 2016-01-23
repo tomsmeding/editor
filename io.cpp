@@ -769,6 +769,49 @@ int runloop(void){
 			Screen::redraw();
 			break;
 		}
+		case '{': {
+			int y;
+			bool sawfilledline=false;
+			bool jumped=false;
+			for(y=fbuf.cury;y>0;y--){
+				size_t llen=fbuf.contents.linelen(y);
+				if(llen>0)sawfilledline=true;
+				else if(sawfilledline){
+					fbuf.cury=y;
+					fbuf.curx=0;
+					jumped=true;
+					break;
+				}
+			}
+			if(!jumped){
+				fbuf.cury=0;
+				fbuf.curx=0;
+			}
+			Screen::redraw();
+			break;
+		}
+		case '}': {
+			unsigned int y;
+			size_t numlines=fbuf.contents.numlines();
+			bool sawfilledline=false;
+			bool jumped=false;
+			for(y=fbuf.cury;y<numlines;y++){
+				size_t llen=fbuf.contents.linelen(y);
+				if(llen>0)sawfilledline=true;
+				else if(sawfilledline){
+					fbuf.cury=y;
+					fbuf.curx=0;
+					jumped=true;
+					break;
+				}
+			}
+			if(!jumped){
+				fbuf.cury=numlines-1;
+				fbuf.curx=fbuf.contents.linelen(fbuf.cury)-1;
+			}
+			Screen::redraw();
+			break;
+		}
 		case 'g':{
 			const char c2=cin.get();
 			if(c2=='g'){

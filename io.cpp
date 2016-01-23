@@ -784,6 +784,19 @@ int runloop(void){
 			Screen::redraw();
 			break;
 		}
+		case 'b': {
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			int i;
+			for(i=fbuf.curx;i>=0;i--){
+				const char curchar=fbuf.contents.at(i,fbuf.cury);
+				if(!isWordChar(curchar, llen)&&--repcount==0) {
+					fbuf.curx=i<=1?0:(i-1);
+					break;
+				}
+			}
+			Screen::redraw();
+			break;
+		}
 		case 'g':{
 			const char c2=cin.get();
 			if(c2=='g'){

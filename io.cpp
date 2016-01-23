@@ -904,7 +904,14 @@ int runloop(void){
 			cout<<gettput("clear")<<flush;
 			while(true){
 				char c=cin.get();
-				cout<<(int)c<<" ("<<Screen::prettychar(c)<<')'<<endl;
+				string s=to_string((int)c)+" ("+Screen::prettychar(c)+')';
+				if(c=='\x16'){
+					Screen::redraw(true);
+					Inter::printStatus(s);
+					break;
+				} else {
+					cout<<s<<endl;
+				}
 			}
 			break;
 		default:

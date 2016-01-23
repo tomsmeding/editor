@@ -568,6 +568,7 @@ CommandRet evalEditorCommand(string scmd){
 
 // returns given char unless it was :
 Maybe<char> waitForKeyOrCommand(void) {
+	Inter::printStatus("Enter key or type command to continue");
 	char c=cin.get();
 	if(c==':'){
 		string cmd=getEditorCommand();

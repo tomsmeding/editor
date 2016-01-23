@@ -17,7 +17,7 @@ public:
 		return *leftv;
 	}
 
-	T fromRight(void) const {
+	U fromRight(void) const {
 		return *rightv;
 	}
 
@@ -36,7 +36,7 @@ public:
 	}
 	static Either<T,U> Right(U v){
 		Either<T,U> e;
-		e.rightv=new T(move(v));
+		e.rightv=new U(move(v));
 		return e;
 	}
 };

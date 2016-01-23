@@ -586,7 +586,7 @@ CommandRet evalEditorCommand(string scmd){
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,VerboseChar)
 
 	Inter::printStatus("Unrecognised command :"+cmd[0],red);
-	return CR_OK;
+	return CR_NEXT;
 }
 
 #undef CALL_EDITOR_COMMAND_RETURN_NOTNEXT
@@ -597,9 +597,9 @@ Either<char,CommandRet> waitForKeyOrCommand(void){
 	Inter::printStatus("Enter key or type command to continue");
 	char c=cin.get();
 	if(c==':'){
+		Screen::redraw(true);
 		string cmd=getEditorCommand();
 		if(cmd.size()==0){
-			Screen::redraw(true);
 			return Either<char,CommandRet>::Right(CR_OK);
 		}
 		return Either<char,CommandRet>::Right(evalEditorCommand(cmd));
@@ -720,6 +720,7 @@ int runloop(void){
 					CommandRet ret=evalEditorCommand(cmd);
 					if(ret==CR_FAIL)return 1;
 					if(ret==CR_QUIT)return 0;
+					if(ret==CR_NEXT)break;
 				}
 			}
 			Screen::gotoFrontBufferCursor();

@@ -37,6 +37,8 @@ Colour ansiTable[8]={black,red,green,yellow,blue,magenta,cyan,white};
 
 unsigned int screencolours;
 
+int exitcode=-1;
+
 unordered_map<string,string> tputcache;
 
 /*
@@ -282,6 +284,19 @@ enum CommandRet{
 
 	CR_NEXT //try next command, this one is not applicable...
 };
+
+void handleCommandRet(CommandRet ret){
+	switch(ret){
+	case CR_QUIT:
+		exitcode=0;
+		break;
+	case CR_FAIL:
+		exitcode=1;
+		break;
+	default:
+		break;
+	}
+}
 
 #define CALL_EDITOR_COMMAND_RETURN_NOTNEXT(nm,cmd,cmd0,bang) \
 	{ \
@@ -573,7 +588,8 @@ Maybe<char> waitForKeyOrCommand(void) {
 	if(c==':'){
 		string cmd=getEditorCommand();
 		if(cmd.size()){
-			evalEditorCommand(cmd);
+			CommandRet ret=evalEditorCommand(cmd);
+			handleCommandRet(ret);
 		}
 		Screen::gotoFrontBufferCursor();
 		return Maybe<char>::Nothing();
@@ -669,6 +685,7 @@ int runloop(void){
 	unsigned int repcount;
 	bool repcountset;
 	while(true){
+		if(exitcode>=0)return exitcode;
 		if(Inter::frontBuffer==-1){
 			if(Inter::buffers.size()==0)Inter::addFilebuffer();
 			else Inter::frontBuffer=Inter::buffers.size()-1;
@@ -692,8 +709,7 @@ int runloop(void){
 			if(cmd.size()){
 				while(repcount-->0){
 					CommandRet ret=evalEditorCommand(cmd);
-					if(ret==CR_FAIL)return 1;
-					if(ret==CR_QUIT)return 0;
+					handleCommandRet(ret);
 				}
 			}
 			Screen::gotoFrontBufferCursor();

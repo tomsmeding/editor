@@ -283,12 +283,12 @@ enum CommandRet{
 	CR_NEXT //try next command, this one is not applicable...
 };
 
-#define CALL_EDITOR_COMMAND_RETURN_NOTNEXT(nm,cmd,cmd0,bang) \
+#define CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,nm) \
 	{ \
 		CommandRet ret=editorCommand##nm(cmd,cmd0,bang); \
 		if(ret!=CR_NEXT)return ret; \
 	}
-#define CALL_EDITOR_COMMAND_RETURN_FAILQUIT(nm,cmd,cmd0,bang) \
+#define CALL_EDITOR_COMMAND_RETURN_FAILQUIT(cmd,cmd0,bang,nm) \
 	{ \
 		CommandRet ret=editorCommand##nm(cmd,cmd0,bang); \
 		if(ret==CR_FAIL||ret==CR_QUIT)return ret; \
@@ -410,8 +410,8 @@ CommandRet editorCommandWrite(vector<string> cmd,string cmd0,bool bang){
 
 CommandRet editorCommandWq(vector<string> cmd,string cmd0,bool bang){
 	if(cmd0!="wq")return CR_NEXT;
-	CALL_EDITOR_COMMAND_RETURN_FAILQUIT(Write,cmd,"write",false)
-	CALL_EDITOR_COMMAND_RETURN_FAILQUIT(Quit,cmd,"quit",bang)
+	CALL_EDITOR_COMMAND_RETURN_FAILQUIT(cmd,"write",false,Write)
+	CALL_EDITOR_COMMAND_RETURN_FAILQUIT(cmd,"quit",bang,Quit)
 	return CR_OK; //apparently Quit didn't quit
 }
 
@@ -571,17 +571,17 @@ CommandRet evalEditorCommand(string scmd){
 		cmd0.pop_back();
 	}
 
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(ColonNum   ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit       ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write      ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq         ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall       ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Tabops     ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Edit       ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Luafile    ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Lua        ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Kaas       ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(VerboseChar,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,ColonNum)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Quit)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Write)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Wq)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Qall)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Tabops)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Edit)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Luafile)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Lua)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Kaas)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,VerboseChar)
 
 	Inter::printStatus("Unrecognised command :"+cmd[0],red);
 	return CR_OK;

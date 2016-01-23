@@ -15,6 +15,7 @@
 #include "screen.h"
 #include "interface.h"
 #include "script.h"
+#include "either.h"
 
 using namespace std;
 
@@ -36,8 +37,6 @@ Colour black  ={  0,  0,  0},
 Colour ansiTable[8]={black,red,green,yellow,blue,magenta,cyan,white};
 
 unsigned int screencolours;
-
-int exitcode=-1;
 
 unordered_map<string,string> tputcache;
 
@@ -285,19 +284,6 @@ enum CommandRet{
 	CR_NEXT //try next command, this one is not applicable...
 };
 
-void handleCommandRet(CommandRet ret){
-	switch(ret){
-	case CR_QUIT:
-		exitcode=0;
-		break;
-	case CR_FAIL:
-		exitcode=1;
-		break;
-	default:
-		break;
-	}
-}
-
 #define CALL_EDITOR_COMMAND_RETURN_NOTNEXT(nm,cmd,cmd0,bang) \
 	{ \
 		CommandRet ret=editorCommand##nm(cmd,cmd0,bang); \
@@ -514,7 +500,7 @@ CommandRet editorCommandLua(vector<string> cmd,string cmd0,bool bang){
 	return CR_OK;
 }
 
-Maybe<char> waitForKeyOrCommand(void);
+Either<char,CommandRet> waitForKeyOrCommand(void);
 
 static const char *kaas="36 .6,\n28 .17,\n20 .26,.\n12 .31,~~,  .\n10 .41,\n .,6 .44,\n20,:~=+5?+==~:11,~4?=5,.\n,:~~6:10,:+11?+=24,\n.:12~::7,:++6?=:12,5:10,.\n :17~3:23,7~==3~::5,\n :~~=~~3=~==13~::4,::13,10~3:5,.\n :6~=~==~4=22~3:11,::13,.\n :3~=~11=7~==~~=~=6+4=3~:25,\n :7~9=8~==3~=8+5=~27,.\n :6~==~~7=5~==3~=~~==3+?3+5=~4:25,\n :6~3=~==~4=~=3~3=~==3~=++3?3+5=~=~=3~::3,:8,:3,4:\n ,7~3=~~7=~==7+~~=++4?3+4=~9=3~::3,5:,4:,,.\n ,6~==4~4=~5=4?II+==8+5=~~14=3~16:,.\n  :5~16=+II4L~~4=4+4=~~26=~~8:,,\n  :5~=~~13=~+?4I3~:~~::8~10=+3=++4=+4?++==~~:,6:,\n  :5~17=~=3+~~==~~4:6~10=3+=+=7+3?++3=4~8:.\n  ,3~6=3+11=5~==~3=~~5:~12=10+=6+11=~~3:.\n  .~~6=??I??17=6+~~14=+=11+9=~==4+4=~~.\n3 ~6=+I5L+14=++?5+~10=+5=13+==~=~~==8+==~~\n3 .:4+=+L5$LLI11=+6?3+16=29+==~~\n4 ..,,:~??8I11=+?5I??++12=+==4+=24+==~:\n6 4.,,3:~~=++11=+?ILL3I??+11=+==30+==~:\n10 5.3,::=8+3=+IILLII3?7=+=++=+=31+=~:\n16 5.3,~??5+==+6?+4=+=++==34+==~:\n22 4.,,:~3?+3=3+4=6+=10+4=4+8=9+=~~:\n27 3.3,::??22+=5+==3+9=7+=~~,\n31 4.3,::=5?13+5?3+=++==II?++=~==5+=~~.\n36 4.3,::~I6?6+6?3+=+==3I??++3=3+=3~\n41 4.3,::~3I6?4I??++=+==ILLI??++==3+=3~\n46 4.3,::~5ILLII??5+=ILLII??+~=++=~~:\n50 5.,,4:~+II??6+=4LII?==++=~~:\n";
 CommandRet editorCommandKaas(vector<string>,string cmd0,bool){
@@ -549,8 +535,9 @@ CommandRet editorCommandKaas(vector<string>,string cmd0,bool){
 		}
 	}
 	cout.flush();
-	waitForKeyOrCommand();
-	return CR_OK;
+	const Either<char,CommandRet> ei=waitForKeyOrCommand();
+	if(ei.isRight())return ei.fromRight();
+	else return CR_OK;
 }
 
 CommandRet evalEditorCommand(string scmd){
@@ -581,21 +568,20 @@ CommandRet evalEditorCommand(string scmd){
 #undef CALL_EDITOR_COMMAND_RETURN_NOTNEXT
 #undef CALL_EDITOR_COMMAND_RETURN_FAILQUIT
 
-// returns given char unless it was :
-Maybe<char> waitForKeyOrCommand(void) {
+//returns given char unless it was ':'
+Either<char,CommandRet> waitForKeyOrCommand(void){
 	Inter::printStatus("Enter key or type command to continue");
 	char c=cin.get();
 	if(c==':'){
 		string cmd=getEditorCommand();
-		if(cmd.size()){
-			CommandRet ret=evalEditorCommand(cmd);
-			handleCommandRet(ret);
+		if(cmd.size()==0){
+			Screen::redraw(true);
+			return Either<char,CommandRet>::Right(CR_OK);
 		}
-		Screen::gotoFrontBufferCursor();
-		return Maybe<char>::Nothing();
+		return Either<char,CommandRet>::Right(evalEditorCommand(cmd));
 	}
 	Screen::redraw(true);
-	return Maybe<char>(c);
+	return Either<char,CommandRet>::Left(c);
 }
 
 
@@ -685,7 +671,6 @@ int runloop(void){
 	unsigned int repcount;
 	bool repcountset;
 	while(true){
-		if(exitcode>=0)return exitcode;
 		if(Inter::frontBuffer==-1){
 			if(Inter::buffers.size()==0)Inter::addFilebuffer();
 			else Inter::frontBuffer=Inter::buffers.size()-1;
@@ -709,7 +694,8 @@ int runloop(void){
 			if(cmd.size()){
 				while(repcount-->0){
 					CommandRet ret=evalEditorCommand(cmd);
-					handleCommandRet(ret);
+					if(ret==CR_FAIL)return 1;
+					if(ret==CR_QUIT)return 0;
 				}
 			}
 			Screen::gotoFrontBufferCursor();

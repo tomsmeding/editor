@@ -538,6 +538,29 @@ CommandRet editorCommandKaas(vector<string>,string cmd0,bool){
 	return CR_OK;
 }
 
+CommandRet editorCommandVerboseChar(vector<string>,string cmd0,bool){
+	if(cmd0!="verbosechar")return CR_NEXT;
+
+	Inter::printStatus("Entering verbose character mode! ^V to quit.",red);
+	usleep(1000000);
+	switchColourFg(Inter::textfg);
+	switchColourBg(Inter::screenbg);
+	cout<<gettput("clear")<<flush;
+	while(true){
+		char c=cin.get();
+		string s=to_string((int)c)+" ("+Screen::prettychar(c)+')';
+		if(c=='\x16'){
+			Screen::redraw(true);
+			Inter::printStatus(s);
+			break;
+		} else {
+			cout<<s<<endl;
+		}
+	}
+
+	return CR_OK;
+}
+
 CommandRet evalEditorCommand(string scmd){
 	bool bang=false;
 	vector<string> cmd=splitSmart(scmd,' ');
@@ -548,16 +571,17 @@ CommandRet evalEditorCommand(string scmd){
 		cmd0.pop_back();
 	}
 
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(ColonNum,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit    ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write   ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq      ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall    ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Tabops  ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Edit    ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Luafile ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Lua     ,cmd,cmd0,bang)
-	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Kaas    ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(ColonNum   ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Quit       ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Write      ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Wq         ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Qall       ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Tabops     ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Edit       ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Luafile    ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Lua        ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(Kaas       ,cmd,cmd0,bang)
+	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(VerboseChar,cmd,cmd0,bang)
 
 	Inter::printStatus("Unrecognised command :"+cmd[0],red);
 	return CR_OK;
@@ -890,29 +914,6 @@ int runloop(void){
 			screensizestore=queryscreensize();
 			Inter::clearStatus();
 			Screen::redraw(true);
-			break;
-		case '\x16': //^V
-			Inter::printStatus("Press ^V again to enter verbose character debug mode!",red);
-			if(cin.get()!='\x16'){
-				Inter::printStatus("k nope");
-				break;
-			}
-			Inter::printStatus("Entering verbose character mode!",red);
-			usleep(1000000);
-			switchColourFg(Inter::textfg);
-			switchColourBg(Inter::screenbg);
-			cout<<gettput("clear")<<flush;
-			while(true){
-				char c=cin.get();
-				string s=to_string((int)c)+" ("+Screen::prettychar(c)+')';
-				if(c=='\x16'){
-					Screen::redraw(true);
-					Inter::printStatus(s);
-					break;
-				} else {
-					cout<<s<<endl;
-				}
-			}
 			break;
 		default:
 			Inter::printStatus("Unrecognised command '"+Screen::prettychar(c)+'\'',red);

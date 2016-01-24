@@ -126,29 +126,25 @@ string askQuestion(string question,const IO::Colour &clr){
 }
 
 void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int height){
-	/*unsigned int tabwidth;
-	if(buffers.size()*3-1>width)tabwidth=2;
-	else tabwidth=UINT_MAX;*/
-	unsigned int acclen=0;
+	unsigned int acclen=0,acclensquashable=0;
 	double factor=1;
 	vector<string> basenames;
-	basenames.reserve(buffers.size());
+	const size_t nbuffers=buffers.size();
+	basenames.reserve(nbuffers);
 	int ndirty=0;
 	for(const Filebuffer &buffer : buffers){
 		basenames.push_back(basename(buffer.openpath));
 		string &fname=basenames.back();
 		if(fname.size()==0)basenames.back()="<>";
-		if(acclen)acclen++; //space between tabs
-		acclen+=fname.size()?fname.size():1;
-		if(buffer.dirty){
-			acclen++;
-			ndirty++;
-		}
+		acclensquashable+=fname.size();
+		acclen+=(acclen>0)+fname.size()+buffer.dirty; //space, name, dirty-*
+		ndirty+=buffer.dirty;
 	}
-	if(acclen>width)factor=(width-(buffers.size()-1-ndirty))/acclen;
+	const unsigned int nnosquash=acclen-acclensquashable;
+	if(acclen>width)factor=(double)(width-nnosquash)/acclensquashable;
 	unsigned int x=0,y=0,linenum;
 	unsigned int i,j;
-	unsigned int nbuf=buffers.size();
+	unsigned int nbuf=nbuffers;
 	for(i=0;i<nbuf;i++){
 		if(i!=0){
 			Screen::Screencell &cell=screen[width*y+x];
@@ -174,7 +170,7 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 			Screen::Screencell &cell=screen[width*y+x];
 			cell.ch='*';
 			cell.clr.fg=textfg;
-			cell.clr.bg=tabbg;
+			cell.clr.bg=(int)i==frontBuffer?tabbg:screenbg;
 			cell.clr.ul=false;
 			x++;
 		}

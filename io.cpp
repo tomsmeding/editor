@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
+#include <cctype>
 #include <unistd.h>
 #include <termios.h>
 #include <signal.h>
@@ -691,6 +692,18 @@ bool jumpToPreviousOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int 
 	return false;
 }
 
+enum CharCat{
+	CC_SPACE=0,
+	CC_ALNUM,
+	CC_PUNCT
+};
+
+CharCat charCategory(char c){
+	if(isspace(c))return CC_SPACE;
+	else if(isalnum(c))return CC_ALNUM;
+	else return CC_PUNCT;
+}
+
 int runloop(void){
 	unsigned int repcount;
 	bool repcountset;
@@ -809,6 +822,66 @@ int runloop(void){
 				fbuf.cury=numlines-1;
 				fbuf.curx=fbuf.contents.linelen(fbuf.cury)-1;
 			}
+			Screen::redraw();
+			break;
+		}
+		case 'w':{
+			unsigned int x=fbuf.curx,y=fbuf.cury;
+			const unsigned int nln=fbuf.contents.numlines();
+			CharCat startcat=charCategory(fbuf.contents.at(x,y));
+			while(y<nln){
+				const unsigned int llen=fbuf.contents.linelen(y);
+				while(x<llen){
+					const char c=fbuf.contents.at(x,y);
+					const CharCat cat=charCategory(c);
+					if(cat==CC_SPACE)startcat=CC_SPACE;
+					else if(cat!=startcat)break;
+					x++;
+				}
+				if(llen&&x<llen)break;
+				startcat=CC_SPACE; //for the newline
+				x=0;
+				y++;
+			}
+			if(nln&&y==nln){
+				y=nln-1;
+				const unsigned int llen=fbuf.contents.linelen(y);
+				x=llen==0?0:llen-1;
+			}
+			fbuf.curx=x; fbuf.cury=y;
+			Screen::redraw();
+			break;
+		}
+		case 'b':{
+			int x=fbuf.curx,y=fbuf.cury;
+			CharCat startcat=charCategory(fbuf.contents.at(x,y));
+			while(y>=0){
+				while(x>=0){
+					const char c=fbuf.contents.at(x,y);
+					const CharCat cat=charCategory(c);
+					if(cat==CC_SPACE)startcat=CC_SPACE;
+					else if(cat!=startcat)break;
+					x--;
+				}
+				if(x>=0)break;
+				startcat=CC_SPACE; //for the newline
+				y--;
+				if(y>=0)x=fbuf.contents.linelen(y)-1;
+			}
+			if(y<0){
+				x=0; y=0;
+			} else {
+				startcat=charCategory(fbuf.contents.at(x,y));
+				x--;
+				while(x>=0){
+					const char c=fbuf.contents.at(x,y);
+					const CharCat cat=charCategory(c);
+					if(cat!=startcat)break;
+					x--;
+				}
+				x++;
+			}
+			fbuf.curx=x; fbuf.cury=y;
 			Screen::redraw();
 			break;
 		}

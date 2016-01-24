@@ -83,6 +83,8 @@ void Textblob::erase(unsigned int x,unsigned int y,unsigned int n){
 }
 
 size_t Textblob::linelen(unsigned int y){
+	if(y>=data.size())
+		throw logic_error("Invalid y value in Textblob::linelen");
 	return data[y].size();
 }
 
@@ -91,10 +93,14 @@ size_t Textblob::numlines(void){
 }
 
 string Textblob::line(unsigned int y){
+	if(y>=data.size())
+		throw logic_error("Invalid y value in Textblob::line");
 	return string(data[y].begin(),data[y].end());
 }
 
 char Textblob::at(unsigned int x,unsigned int y){
+	if(y>=data.size()||x>=data[y].size())
+		throw logic_error("Invalid x or y value in Textblob::at");
 	return data[y][x];
 }
 

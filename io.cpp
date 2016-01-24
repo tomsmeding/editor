@@ -788,7 +788,6 @@ int runloop(void){
 				while(x<llen){
 					const char c=fbuf.contents.at(x,y);
 					const CharCat cat=charCategory(c);
-					cerr<<"x,y=("<<x<<','<<y<<") c="<<c<<" sc="<<startcat<<" cat="<<cat<<endl;
 					if(cat==CC_SPACE)startcat=CC_SPACE;
 					else if(cat!=startcat)break;
 					x++;

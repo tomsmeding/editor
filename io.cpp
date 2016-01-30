@@ -537,8 +537,11 @@ CommandRet editorCommandKaas(vector<string>,string cmd0,bool){
 	}
 	cout.flush();
 	const Either<char,CommandRet> ei=waitForKeyOrCommand();
-	if(ei.isRight())return ei.fromRight();
-	else return CR_OK;
+	if(ei.isRight()){
+		CommandRet cr=ei.fromRight();
+		if(cr==CR_NEXT)cr=CR_OK;
+		return cr;
+	} else return CR_OK;
 }
 
 CommandRet editorCommandVerboseChar(vector<string>,string cmd0,bool){

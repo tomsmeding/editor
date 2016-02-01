@@ -697,13 +697,13 @@ bool jumpToPreviousOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int 
 
 enum CharCat{
 	CC_SPACE=0,
-	CC_ALNUM,
+	CC_WORD,
 	CC_PUNCT
 };
 
 CharCat charCategory(char c){
 	if(isspace(c))return CC_SPACE;
-	else if(isalnum(c))return CC_ALNUM;
+	else if(isalnum(c)||c=='_')return CC_WORD;
 	else return CC_PUNCT;
 }
 

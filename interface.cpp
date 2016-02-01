@@ -45,6 +45,7 @@ bool Filebuffer::open(string fname,bool doredraw){
 	Either<string,string> errcont=Disk::readFromFile(fname);
 	if(errcont.isLeft()){
 		printStatus(errcont.fromLeft(),IO::red);
+		contents.clear();
 		dirty=true;
 	} else {
 		contents=Textblob(errcont.fromRight());

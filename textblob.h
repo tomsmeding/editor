@@ -18,6 +18,8 @@ public:
 	void overwrite(unsigned int x,unsigned int y,string s);
 	void erase(unsigned int x,unsigned int y,unsigned int n);
 
+	void clear(void);
+
 	size_t linelen(unsigned int y);
 	size_t numlines(void);
 	string line(unsigned int y);

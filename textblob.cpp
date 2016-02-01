@@ -82,6 +82,11 @@ void Textblob::erase(unsigned int x,unsigned int y,unsigned int n){
 	data.erase(data.begin()+y);
 }
 
+void Textblob::clear(void){
+	data.clear();
+	data.emplace_back();
+}
+
 size_t Textblob::linelen(unsigned int y){
 	if(y>=data.size())
 		throw logic_error("Invalid y value in Textblob::linelen");

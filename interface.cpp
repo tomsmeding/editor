@@ -248,6 +248,10 @@ void drawScreen(Screen::Screencell *screen,unsigned int width,unsigned int heigh
 				}
 			}
 			if(i==linelen&&linenum==fbuf.cury&&fbuf.curx==linelen){
+				if(x==width){
+					x=editx;
+					y++;
+				}
 				fbuf.screencurx=x;
 				fbuf.screencury=y;
 			}

@@ -830,6 +830,7 @@ int runloop(void){
 		}
 		case 'w':{
 			unsigned int x=fbuf.curx,y=fbuf.cury;
+			if(x>=fbuf.contents.linelen(y))break;
 			const unsigned int nln=fbuf.contents.numlines();
 			for(unsigned int i=0;i<repcount;i++){
 				CharCat startcat=charCategory(fbuf.contents.at(x,y));
@@ -860,6 +861,7 @@ int runloop(void){
 		}
 		case 'b':{
 			int x=fbuf.curx,y=fbuf.cury;
+			if(x>=(int)fbuf.contents.linelen(y))break;
 			CharCat startcat;
 			for(unsigned int i=0;i<repcount;i++){
 				CharCat startcat=charCategory(fbuf.contents.at(x,y));

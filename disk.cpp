@@ -72,7 +72,7 @@ writeToFileSimple:
 	string response=Inter::askQuestion("Cannot write atomically; write directly? (unsafe!) [y/N] ",IO::red);
 	if(response.size()==0||(response[0]!='y'&&response[0]!='Y'))
 		return Maybe<string>("(canceled)");
-	fd=open(fname.data(),O_WRONLY|O_CREAT);
+	fd=open(fname.data(),O_WRONLY|O_CREAT,0777);
 	if(fd==-1)
 		return Maybe<string>("Cannot open file '"+fname+'\'');
 	cursor=0;

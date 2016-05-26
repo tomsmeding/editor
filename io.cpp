@@ -1033,6 +1033,15 @@ int runloop(void){
 			insertModeRunLoop();
 			break;
 		}
+		case 's':{
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			if(llen!=0){
+				fbuf.dirty=true;
+				fbuf.contents.erase(fbuf.curx,fbuf.cury,1);
+			}
+			insertModeRunLoop();
+			break;
+		}
 		case 'D':{
 			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 			if(llen!=0)fbuf.dirty=true;

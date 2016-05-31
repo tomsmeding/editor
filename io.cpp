@@ -862,36 +862,31 @@ int runloop(void){
 		case 'b':{
 			int x=fbuf.curx,y=fbuf.cury;
 			if(x>=(int)fbuf.contents.linelen(y))break;
-			CharCat startcat;
 			for(unsigned int i=0;i<repcount;i++){
 				CharCat startcat=charCategory(fbuf.contents.at(x,y));
-				while(y>=0){
-					while(x>=0){
-						const char c=fbuf.contents.at(x,y);
-						const CharCat cat=charCategory(c);
-						if(cat==CC_SPACE)startcat=CC_SPACE;
-						else if(cat!=startcat)break;
-						x--;
-					}
-					if(x>=0)break;
-					startcat=CC_SPACE; //for the newline
+				if(x==0){
+					if(y==0)break;
 					y--;
-					if(y>=0)x=fbuf.contents.linelen(y)-1;
+					const unsigned int llen=fbuf.contents.linelen(y);
+					x=llen==0?0:llen-1;
+				} else {
+					x--;
 				}
-				if(y<0)break;
-			}
-			if(y<0){
-				x=0; y=0;
-			} else {
-				startcat=charCategory(fbuf.contents.at(x,y));
-				x--;
 				while(x>=0){
 					const char c=fbuf.contents.at(x,y);
 					const CharCat cat=charCategory(c);
-					if(cat!=startcat)break;
+					if(cat!=CC_SPACE)break;
 					x--;
 				}
-				x++;
+				while(x>=0){
+					const char c=fbuf.contents.at(x,y);
+					const CharCat cat=charCategory(c);
+					if(cat!=startcat){
+						x++;
+						break;
+					}
+					x--;
+				}
 			}
 			fbuf.curx=x; fbuf.cury=y;
 			Screen::redraw();

@@ -1046,6 +1046,20 @@ int runloop(void){
 			insertModeRunLoop();
 			break;
 		}
+		case 'r':{
+			const char replaceChar=cin.get();
+			if(replaceChar=='\x1B')break; // escape
+			if(!fbuf.contents.exists(fbuf.curx,fbuf.cury)){
+				cout<<gettput("bel")<<flush;
+				break;
+			}
+
+			fbuf.dirty=true;
+			fbuf.contents.overwrite(fbuf.curx,fbuf.cury,string(1,replaceChar));
+			Screen::redraw();
+
+			break;
+		}
 		case 'D':{
 			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 			if(llen!=0)fbuf.dirty=true;

@@ -23,6 +23,7 @@ public:
 	size_t linelen(unsigned int y);
 	size_t numlines(void);
 	string line(unsigned int y);
+	bool exists(unsigned int x,unsigned int y);
 	char at(unsigned int x,unsigned int y);
 
 	friend string to_string(Textblob &tb);

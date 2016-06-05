@@ -103,6 +103,10 @@ string Textblob::line(unsigned int y){
 	return string(data[y].begin(),data[y].end());
 }
 
+bool Textblob::exists(unsigned int x,unsigned int y){
+	return y<data.size()&&x<data[y].size();
+}
+
 char Textblob::at(unsigned int x,unsigned int y){
 	if(y>=data.size()||x>=data[y].size())
 		throw logic_error("Invalid x or y value in Textblob::at");

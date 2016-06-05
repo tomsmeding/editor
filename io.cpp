@@ -572,6 +572,11 @@ CommandRet evalEditorCommand(string scmd){
 	vector<string> cmd=splitSmart(scmd,' ');
 	if(cmd.size()==0)return CR_OK;
 	string cmd0=cmd[0];
+
+	//remove leading `:`s
+	size_t endpos=cmd0.find_first_not_of(":");
+	if(endpos!=string::npos)cmd0=cmd0.substr(endpos,string::npos);
+
 	if(cmd0.back()=='!'){
 		bang=true;
 		cmd0.pop_back();
@@ -589,7 +594,7 @@ CommandRet evalEditorCommand(string scmd){
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,Kaas)
 	CALL_EDITOR_COMMAND_RETURN_NOTNEXT(cmd,cmd0,bang,VerboseChar)
 
-	Inter::printStatus("Unrecognised command :"+cmd[0],red);
+	Inter::printStatus("Unrecognised command :"+cmd0,red);
 	return CR_NEXT;
 }
 

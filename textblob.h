@@ -14,8 +14,10 @@ public:
 	explicit Textblob(const string &from);
 
 	void insert(unsigned int x,unsigned int y,string s);
+	void insert(unsigned int x,unsigned int y,char s);
 	void insertLineBefore(unsigned int y,string s);
 	void overwrite(unsigned int x,unsigned int y,string s);
+	void overwrite(unsigned int x,unsigned int y,char c);
 	void erase(unsigned int x,unsigned int y,unsigned int n);
 
 	void clear(void);

@@ -642,7 +642,7 @@ void insertModeRunLoop(void){
 		}
 		if(c=='\r')c='\n'; //enter
 		if(c=='\t'||c=='\n'||(c>=' '&&c<=(unsigned char)'\x80')){
-			fbuf.contents.insert(fbuf.curx,fbuf.cury,string(1,c));
+			fbuf.contents.insert(fbuf.curx,fbuf.cury,c);
 			if(c=='\n'){
 				fbuf.curx=0;
 				fbuf.cury++;
@@ -1055,7 +1055,7 @@ int runloop(void){
 			}
 
 			fbuf.dirty=true;
-			fbuf.contents.overwrite(fbuf.curx,fbuf.cury,string(1,replaceChar));
+			fbuf.contents.overwrite(fbuf.curx,fbuf.cury,replaceChar);
 			Screen::redraw();
 
 			break;

@@ -46,6 +46,9 @@ void Textblob::insert(unsigned int x,unsigned int y,string s){
 		data[y].insert(data[y].begin(),s.begin()+cursor,s.end());
 	}
 }
+void Textblob::insert(unsigned int x,unsigned int y,char c){
+	insert(x,y,string(1,c));
+}
 void Textblob::insertLineBefore(unsigned int y,string s){
 	if(y>data.size())
 		throw logic_error("Invalid y value in Textblob::insertLineAfter");
@@ -54,6 +57,9 @@ void Textblob::insertLineBefore(unsigned int y,string s){
 void Textblob::overwrite(unsigned int x,unsigned int y,string s){
 	erase(x,y,s.size());
 	insert(x,y,s);
+}
+void Textblob::overwrite(unsigned int x,unsigned int y,char c){
+	overwrite(x,y,string(1,c));
 }
 void Textblob::erase(unsigned int x,unsigned int y,unsigned int n){
 	if(y>=data.size()||x>data[y].size())

@@ -1065,6 +1065,15 @@ int runloop(void){
 
 			break;
 		}
+		case 'x':{
+			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+			if(llen==0)break;
+			fbuf.dirty=true;
+			fbuf.contents.erase(fbuf.curx,fbuf.cury,1);
+			if(fbuf.curx>0)fbuf.curx--;
+			Screen::redraw();
+			break;
+		}
 		case 'd':{
 			const char c2=cin.get();
 			if(c2=='d'){

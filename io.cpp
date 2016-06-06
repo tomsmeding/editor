@@ -1065,6 +1065,23 @@ int runloop(void){
 
 			break;
 		}
+		case 'd':{
+			const char c2=cin.get();
+			if(c2=='d'){
+				fbuf.contents.removeLine(fbuf.cury);
+
+				const unsigned int nln=fbuf.contents.numlines();
+				unsigned int newy=min(fbuf.cury+repcount,nln-1); // don't move past end of buffer
+				fbuf.cury=newy;
+				moveToBeginAfterIndent(fbuf);
+
+				Screen::redraw();
+			} else {
+				// TODO: support actual motions
+				cout<<gettput("bel")<<flush;
+			}
+			break;
+		}
 		case 'D':{
 			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 			if(llen!=0)fbuf.dirty=true;

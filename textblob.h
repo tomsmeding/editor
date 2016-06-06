@@ -19,6 +19,7 @@ public:
 	void overwrite(unsigned int x,unsigned int y,string s);
 	void overwrite(unsigned int x,unsigned int y,char c);
 	void erase(unsigned int x,unsigned int y,unsigned int n);
+	void removeLine(unsigned int y);
 
 	void clear(void);
 

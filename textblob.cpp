@@ -87,6 +87,12 @@ void Textblob::erase(unsigned int x,unsigned int y,unsigned int n){
 	data[y-1].insert(data[y-1].end(),data[y].begin()+n,data[y].end());
 	data.erase(data.begin()+y);
 }
+void Textblob::removeLine(unsigned int y){
+	if(y>=data.size())
+		throw logic_error("Invalid y value in Textblob::removeLine");
+	data.erase(data.begin()+y);
+	if(data.size()==0)data.emplace_back();
+}
 
 void Textblob::clear(void){
 	data.clear();

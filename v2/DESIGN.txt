@@ -1,0 +1,2 @@
+Textbuf is a low-level object that contains the raw text in a buffer
+Buffer is a wrapper around a Textbuf that implements lots of editor functionality in terms of functions

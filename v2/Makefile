@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -O2 -fwrapv -I$(TERMIO_PREFIX)/include -I$(POSTL_PREFIX)/include
+CFLAGS = -Wall -Wextra -std=c11 -O2 -fwrapv -lm -I$(TERMIO_PREFIX)/include -I$(POSTL_PREFIX)/include
 
 BIN = editor
 

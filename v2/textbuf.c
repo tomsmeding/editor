@@ -109,3 +109,9 @@ char textbuf_at(const Textbuf *tb,int line,int col){
 	assert(col>=0&&col<string_length(tb->lines[line]));
 	return string_at(tb->lines[line],col);
 }
+
+const String* textbuf_line(const Textbuf *tb,int line){
+	assert(tb);
+	assert(line>=0&&line<tb->len);
+	return tb->lines[line];
+}

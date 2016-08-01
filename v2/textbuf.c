@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
@@ -23,19 +24,47 @@ Textbuf* textbuf_make(void){
 
 void textbuf_destroy(Textbuf *tb){
 	assert(tb);
-	for(int i=0;i<tb->len;i++)string_destroy(tb->lines[i]);
+	fprintf(stderr,"tb %p: nlines = %d sz = %d lines = %p\n",tb,tb->len,tb->sz,tb->lines);
+	for(int i=0;i<tb->len;i++){
+		fprintf(stderr,"Destroying line %i of tb %p\n",i,tb);
+		string_destroy(tb->lines[i]);
+	}
 	free(tb->lines);
 	free(tb);
 }
 
 void textbuf_insert(Textbuf *tb,int line,int col,const String *s){
 	assert(tb);
-	assert(line>=0&&line<tb->len);
-	assert(col>=0&&col<=string_length(tb->lines[line]));
+	if(tb->len==0){
+		assert(line==0&&col==0);
+	} else {
+		assert(line>=0&&line<tb->len);
+		assert(col>=0&&col<=string_length(tb->lines[line]));
+	}
 	int len=string_length(s);
 	const char *sd=string_data(s);
 	int i,nlf=0;
 	for(i=0;i<len;i++)nlf+=sd[i]=='\n';
+	fprintf(stderr,"tb->len = %d\n",tb->len);
+	if(tb->len==0){
+		if(nlf+1>tb->sz){
+			tb->sz=nlf+1;
+			tb->lines=realloc(tb->lines,tb->sz*sizeof(String*));
+			if(!tb->lines)outofmem();
+		}
+		const char *start=sd;
+		const char *end;
+		i=0;
+		for(end=start;end-start<len;end++){
+			if(*end=='\n'){
+				tb->lines[i++]=string_frombuf(start,end-start);
+				start=end+1;
+			}
+		}
+		if(end>start)tb->lines[i++]=string_frombuf(start,end-start);
+		tb->len=nlf+1;
+		return;
+	}
 	if(nlf==0){
 		string_insert_s(tb->lines[line],col,s);
 		return;
@@ -90,6 +119,11 @@ void textbuf_delete(Textbuf *tb,int line1,int col1,int line2,int col2){
 	for(int i=line1+1;i<line2;i++)string_destroy(tb->lines[i]);
 	memmove(tb->lines+(line1+1),tb->lines+line2,(tb->len-line2)*sizeof(String*));
 	tb->len-=line2-line1-1;
+}
+
+void textbuf_clear(Textbuf *tb){
+	for(int i=0;i<tb->len;i++)string_destroy(tb->lines[i]);
+	tb->len=0;
 }
 
 int textbuf_nlines(const Textbuf *tb){

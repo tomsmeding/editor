@@ -3,6 +3,7 @@
 #include <termio.h>
 
 #include "buffer.h"
+#include "disk.h"
 
 static void drawbox(int x,int y,int w,int h){
 	moveto(x,y);
@@ -47,7 +48,7 @@ static void reroutestderr(void){
 	atexit(closecatstderr);
 }
 
-int main(void){
+int main(int argc,char **argv){
 	reroutestderr();
 
 	initscreen();
@@ -57,7 +58,13 @@ int main(void){
 	installCLhandler(true);
 
 	Buffer *b=b_make();
-	b_draw(b,2,2,9,7); setfg(9); drawboxaround(2,2,9,7);
+	if(argc>=2){
+		String *s=disk_read(argv[1]);
+		if(!s)s=string_fromcstr("Could not read this file");
+		b_insert(b,s);
+		string_destroy(s);
+	}
+	drawboxaround(2,2,9,7); b_draw(b,2,2,9,7);
 	redraw();
 	tgetkey();
 	b_destroy(b);

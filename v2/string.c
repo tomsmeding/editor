@@ -42,6 +42,15 @@ String* string_frombuf(const char *buf,int len){
 	return s;
 }
 
+String* string_frombufnocopy(char *buf,int len){
+	assert(buf);
+	String *s=malloc(1,String);
+	if(!s)outofmem();
+	s->buf=buf;
+	s->sz=s->len=len;
+	return s;
+}
+
 void string_destroy(String *s){
 	assert(s);
 	free(s->buf);

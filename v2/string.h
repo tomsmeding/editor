@@ -6,6 +6,7 @@ typedef struct String String;
 String* string_empty(int cap);
 String* string_fromcstr(const char *cs);
 String* string_frombuf(const char *buf,int len);
+String* string_frombufnocopy(char *buf,int len);
 void string_destroy(String *s);
 void string_append_c(String *s,char c);
 void string_append_cs(String *s,const char *cs);

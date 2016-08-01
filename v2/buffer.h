@@ -15,5 +15,8 @@ int b_nlines(const Buffer *b);
 String* b_linerepr(const Buffer *b,int line);
 void b_draw(const Buffer *b,int atx,int aty,int w,int h);
 
+void b_clear(Buffer *b);
+
 bool b_cursor_move(Buffer *b,Direction dir);
+void b_insertchar(Buffer *b,char c);
 void b_insert(Buffer *b,const String *text);

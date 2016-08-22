@@ -914,7 +914,7 @@ int runloop(void){
 			unsigned int newy=nln-1;
 			if(repcountset&&repcount>0)newy=repcount-1;
 			fbuf.cury=min(newy,nln-1); // don't move past end of buffer
-			fbuf.curx=0;
+			moveToBeginAfterIndent(fbuf);
 			Screen::redraw();
 			break;
 		}

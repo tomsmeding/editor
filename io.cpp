@@ -1070,7 +1070,7 @@ int runloop(void){
 			if(llen==0)break;
 			fbuf.dirty=true;
 			fbuf.contents.erase(fbuf.curx,fbuf.cury,1);
-			if(fbuf.curx>0)fbuf.curx--;
+			//if(fbuf.curx>0)fbuf.curx--;
 			Screen::redraw();
 			break;
 		}

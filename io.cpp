@@ -1070,7 +1070,7 @@ int runloop(void){
 			if(llen==0)break;
 			fbuf.dirty=true;
 			fbuf.contents.erase(fbuf.curx,fbuf.cury,1);
-			if(fbuf.curx>0)fbuf.curx--;
+			if(fbuf.curx==llen-1)fbuf.curx--;
 			Screen::redraw();
 			break;
 		}
@@ -1078,6 +1078,7 @@ int runloop(void){
 			const char c2=cin.get();
 			if(c2=='d'){
 				fbuf.contents.removeLine(fbuf.cury);
+				fbuf.dirty=true;// mark as file edited. TODO: check to see if file is empty first
 
 				const unsigned int nln=fbuf.contents.numlines();
 				unsigned int newy=min(fbuf.cury+repcount,nln-1); // don't move past end of buffer
@@ -1093,17 +1094,25 @@ int runloop(void){
 		}
 		case 'D':{
 			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
-			if(llen!=0)fbuf.dirty=true;
+			if(llen!=0)fbuf.dirty=true;// mark as file edited
 			fbuf.contents.erase(fbuf.curx,fbuf.cury,llen-fbuf.curx);
 			if(fbuf.curx>0)fbuf.curx--;
 			Screen::redraw();
 			break;
 		}
-		case '\x0C': //^L
+		case '\x0C':{ //^L
 			screensizestore=queryscreensize();
 			Inter::clearStatus();
 			Screen::redraw(true);
 			break;
+		}
+		case '\x1B':{ // esc
+					  // This clears any status and prevents an Unrecognised command from showing up
+			repcount=1;
+			Inter::clearStatus();
+			Screen::redraw();
+			break;
+		}
 		default:
 			Inter::printStatus("Unrecognised command '"+Screen::prettychar(c)+'\'',red);
 		}

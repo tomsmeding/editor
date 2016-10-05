@@ -793,14 +793,41 @@ int runloop(void){
 			break;
 		}
 		case '\x1B':{ // esc
-//			while(true) {
-// This will be changed to handle arrow keys and other commands
-//			}
-
-			repcount=1;
-			Inter::clearStatus();
-			Screen::redraw();
-			break;
+			char c2=cin.get();
+			if (c2==0) { // Just a regular escape.
+				repcount=1;
+				Inter::clearStatus();
+				Screen::redraw();
+				break;
+			}
+			c2=cin.get(); // Additional escape sequences to be defined
+			if (c2=='[') {
+				if (c2>='0' && c2<='9') {
+					c2=cin.get();
+					if (c2=='~') break;
+				}
+			}
+			else {
+				switch(c2) {
+					case 'A':// UP arrow
+						moveUp(repcount, fbuf);
+						Screen::redraw();
+						break;
+					case 'B':// DOWN arrow
+						moveDown(repcount, fbuf);
+						Screen::redraw();
+						break;
+					case 'C':// RIGHT arrow
+						moveRight(repcount, fbuf);
+						Screen::redraw();
+						break;
+					case 'D':// LEFT arrow
+						moveLeft(repcount, fbuf);
+						Screen::redraw();
+						break;
+				}
+			}
+			break;//Hmm, I dunno
 		}
 		case 'h':
 			moveLeft(repcount, fbuf);

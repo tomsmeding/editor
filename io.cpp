@@ -712,6 +712,51 @@ CharCat charCategory(char c){
 	else return CC_PUNCT;
 }
 
+// Right now, we need to pass in the filebuffers. By reference to improve
+// performance a little bit.
+void moveLeft(unsigned int repcount, Inter::Filebuffer &fbuf){
+	if(fbuf.curx>=repcount)fbuf.curx-=repcount;
+	else {
+		fbuf.curx=0;
+		cout<<gettput("bel")<<flush;
+	}
+}
+
+void moveRight(unsigned int repcount, Inter::Filebuffer &fbuf){
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	if(fbuf.curx+repcount<llen)fbuf.curx+=repcount;
+	else {
+		fbuf.curx=llen==0?0:llen-1;
+		cout<<gettput("bel")<<flush;
+	}
+}
+
+
+void moveUp(unsigned int repcount, Inter::Filebuffer &fbuf){
+	if(fbuf.cury>=repcount)fbuf.cury-=repcount;
+	else {
+		fbuf.cury=0;
+		cout<<gettput("bel")<<flush;
+	}
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	if(llen==0)fbuf.curx=0;
+	else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
+}
+
+
+void moveDown(unsigned int repcount, Inter::Filebuffer &fbuf){
+	const unsigned int nln=fbuf.contents.numlines();
+	if(fbuf.cury+repcount<nln)fbuf.cury+=repcount;
+	else {
+		fbuf.cury=nln==0?0:nln-1;
+		cout<<gettput("bel")<<flush;
+	}
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	if(llen==0)fbuf.curx=0;
+	else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
+}
+
+
 int runloop(void){
 	unsigned int repcount;
 	bool repcountset;
@@ -747,46 +792,32 @@ int runloop(void){
 			Screen::gotoFrontBufferCursor();
 			break;
 		}
+		case '\x1B':{ // esc
+//			while(true) {
+// This will be changed to handle arrow keys and other commands
+//			}
+
+			repcount=1;
+			Inter::clearStatus();
+			Screen::redraw();
+			break;
+		}
 		case 'h':
-			if(fbuf.curx>=repcount)fbuf.curx-=repcount;
-			else {
-				fbuf.curx=0;
-				cout<<gettput("bel")<<flush;
-			}
+			moveLeft(repcount, fbuf);
 			Screen::redraw();
 			break;
 		case 'j':{
-			const unsigned int nln=fbuf.contents.numlines();
-			if(fbuf.cury+repcount<nln)fbuf.cury+=repcount;
-			else {
-				fbuf.cury=nln==0?0:nln-1;
-				cout<<gettput("bel")<<flush;
-			}
-			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
-			if(llen==0)fbuf.curx=0;
-			else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
+			moveDown(repcount, fbuf);
 			Screen::redraw();
 			break;
 		}
 		case 'k':{
-			if(fbuf.cury>=repcount)fbuf.cury-=repcount;
-			else {
-				fbuf.cury=0;
-				cout<<gettput("bel")<<flush;
-			}
-			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
-			if(llen==0)fbuf.curx=0;
-			else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
+			moveUp(repcount, fbuf);
 			Screen::redraw();
 			break;
 		}
 		case 'l':{
-			const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
-			if(fbuf.curx+repcount<llen)fbuf.curx+=repcount;
-			else {
-				fbuf.curx=llen==0?0:llen-1;
-				cout<<gettput("bel")<<flush;
-			}
+			moveRight(repcount, fbuf);
 			Screen::redraw();
 			break;
 		}
@@ -1106,10 +1137,18 @@ int runloop(void){
 			Screen::redraw(true);
 			break;
 		}
-		case '\x1B':{ // esc
-					  // This clears any status and prevents an Unrecognised command from showing up
-			repcount=1;
-			Inter::clearStatus();
+		case '\x7F':{// BACKSPACE
+			//unsigned int backbuffer=0;
+			if(fbuf.curx>=repcount)fbuf.curx-=repcount;
+			else fbuf.curx = 0;
+			/*
+			else {//  TODO: Finish this implementation
+				repcount-=fbuf.curx;
+				while(fbuf.cury>0){
+
+				}
+			}
+			*/
 			Screen::redraw();
 			break;
 		}

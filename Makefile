@@ -21,7 +21,7 @@ else  #linux?
 	CXXFLAGS += -I$(LUA_LOC)
 	LDFLAGS := -llua$(LUA_VER) -ldl
 endif
-BIN := main
+BIN := editor
 
 src_files := $(wildcard *.cpp)
 obj_files := $(patsubst %.cpp,%.o,$(src_files))

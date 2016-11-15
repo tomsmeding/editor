@@ -39,6 +39,12 @@ void Editor::drawActive(){
 void Editor::newView(){
 	i64 x,y,w,h;
 	sizeProvider(x,y,w,h);
+	if(views.size()!=0)activeidx++;
 	views.emplace(views.begin()+activeidx,"<New file>",x,y,w,h);
-	if(activeidx!=(i64)views.size()-1)activeidx++;
+}
+
+void Editor::closeView(){
+	views.erase(views.begin()+activeidx);
+	if(views.size()==0)newView();
+	else if(activeidx==views.size())activeidx--;
 }

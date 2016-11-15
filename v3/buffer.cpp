@@ -219,7 +219,7 @@ void Buffer::moveCursors(Dir dir){
 			for(i64 i=0;i<ncursors;i++){
 				if(cursors[i].x!=tb.lineLen(cursors[i].y)){
 					cursors[i].x++;
-				} else if(cursors[i].y!=tb.numLines()){
+				} else if(cursors[i].y!=tb.numLines()-1){
 					cursors[i].x=0;
 					cursors[i].y++;
 				}

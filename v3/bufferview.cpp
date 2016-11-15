@@ -176,7 +176,6 @@ const string& BufferView::getName() const {
 }
 
 bool BufferView::handleKey(int key){
-	cerr<<"handleKey("<<key<<")"<<endl;
 	switch(key){
 		case KEY_BACKSPACE:
 			if(!buffer.backspace())bel();

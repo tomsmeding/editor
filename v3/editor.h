@@ -17,7 +17,7 @@ public:
 	Editor(const function<void(i64 &x,i64 &y,i64 &w,i64 &h)> &sizeProvider);
 	~Editor();
 	
-	bool handleKey(int key); //returns whether handled
+	bool handleKey(int key); //passes on to active view; returns whether handled
 
 	i64 numViews() const;
 	BufferView& view(i64 index);
@@ -27,4 +27,5 @@ public:
 	void drawActive();
 
 	void newView();
+	void closeView();
 };

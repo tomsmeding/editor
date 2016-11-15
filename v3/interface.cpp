@@ -12,7 +12,7 @@ namespace Interface{
 	public:
 		TermioRAII(){
 			initscreen();
-			initkeyboard();
+			initkeyboard(true);
 			installCLhandler(true);
 		}
 
@@ -21,6 +21,37 @@ namespace Interface{
 			endscreen();
 		}
 	};
+
+	static void printStatus(const char *str){
+		Size termsize=gettermsize();
+		pushcursor();
+		moveto(0,termsize.h-1);
+		Style style={.fg=9,.bg=9,.bold=true,.ul=false};
+		setstyle(&style);
+		tprintf("%s",str);
+		popcursor();
+	}
+
+	static bool confirmStatus(const char *str,bool defChoice){
+		Size termsize=gettermsize();
+		pushcursor();
+		moveto(0,termsize.h-1);
+		Style style={.fg=9,.bg=9,.bold=true,.ul=false};
+		setstyle(&style);
+		tprintf("%s [%s] ",str,defChoice?"Y/n":"y/N");
+		redraw();
+		int key=tgetkey();
+		bool choice;
+		if(defChoice==true){
+			choice=key!='n'&&key!='N';
+		} else {
+			choice=key=='Y'||key=='y';
+		}
+		fillrect(0,termsize.h-1,termsize.w,1,' ');
+		redraw();
+		popcursor();
+		return choice;
+	}
 
 	void show(){
 		TermioRAII termioRAII;
@@ -52,6 +83,9 @@ namespace Interface{
 			}
 
 			moveto(0,0);
+			Style blankStyle={.fg=9,.bg=9,.bold=false,.ul=false};
+			setstyle(&blankStyle);
+			fillrect(0,0,termsize.w,1,' ');
 
 			for(i64 i=0;i<nviews;i++){
 				Style style={.fg=7,.bg=i==activeidx?4:9,.bold=false,.ul=false};
@@ -86,8 +120,25 @@ namespace Interface{
 			redraw();
 
 			int key=tgetkey();
-			if(!editor.handleKey(key)){
-				bel();
+			cerr<<"tgetkey -> "<<key<<endl;
+			switch(key){
+				case KEY_CTRL+'Q':
+					return;
+
+				case KEY_CTRL+'N':
+					editor.newView();
+					break;
+
+				case KEY_CTRL+'W':
+					if(confirmStatus("Close buffer?",true))editor.closeView();
+					break;
+
+				default:
+					if(!editor.handleKey(key)){
+						printStatus("Unknown key");
+						bel();
+					}
+					break;
 			}
 		}
 	}

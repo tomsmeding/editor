@@ -1,7 +1,7 @@
 #include <vector>
 #include <termio.h>
 #include "interface.h"
-#include "bufferview.h"
+#include "editor.h"
 
 using namespace std;
 
@@ -24,28 +24,26 @@ namespace Interface{
 
 	void show(){
 		TermioRAII termioRAII;
-		vector<BufferView> views;
-		i64 activeidx=0,tabscroll=0;
+		i64 tabscroll=0;
+		Editor editor([](i64 &x,i64 &y,i64 &w,i64 &h){
+			Size termsize=gettermsize();
+			x=0; y=1;
+			w=termsize.w; h=termsize.h-2;
+		});
 
 		while(true){
 			Size termsize=gettermsize();
 
-			if(views.size()==0){
-				views.emplace_back("<New file>",0,1,termsize.w,termsize.h-2);
-				activeidx=0;
-				tabscroll=0;
-			} else if(activeidx>=(i64)views.size()){
-				activeidx=views.size()-1;
-			}
-
-			i64 nviews=views.size();
+			i64 nviews=editor.numViews();
 			i64 tabpos[nviews],tabwid[nviews];
 			tabpos[0]=0;
-			tabwid[0]=min((int)views[0].getName().size()+2,termsize.w-4);
+			tabwid[0]=min((int)editor.view(0).getName().size()+2,termsize.w-4);
 			for(i64 i=1;i<nviews;i++){
 				tabpos[i]=tabpos[i-1]+tabwid[i-1];
-				tabwid[i]=min((int)views[i].getName().size()+2,termsize.w-4);
+				tabwid[i]=min((int)editor.view(i).getName().size()+2,termsize.w-4);
 			}
+
+			i64 activeidx=editor.activeIndex();
 
 			if(tabpos[activeidx]-tabscroll<0){
 				tabscroll=max(tabpos[activeidx]-1,0LL);
@@ -58,7 +56,7 @@ namespace Interface{
 			for(i64 i=0;i<nviews;i++){
 				Style style={.fg=7,.bg=i==activeidx?4:9,.bold=false,.ul=false};
 				setstyle(&style);
-				const string &name=views[i].getName();
+				const string &name=editor.view(i).getName();
 				if(tabpos[i]<tabscroll&&tabpos[i]+tabwid[i]>=tabscroll){
 					if(tabpos[i]+tabwid[i]==tabscroll){
 						tputc(' ');
@@ -83,12 +81,12 @@ namespace Interface{
 				}
 			}
 
-			views[activeidx].draw(0,1,termsize.w,termsize.h-2);
+			editor.drawActive();
 
 			redraw();
 
 			int key=tgetkey();
-			if(!views[activeidx].handleKey(key)){
+			if(!editor.handleKey(key)){
 				bel();
 			}
 		}

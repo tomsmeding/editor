@@ -16,7 +16,12 @@ class BufferView{
 
 public:
 	BufferView(const string &name,i64 x,i64 y,i64 w,i64 h);
+	BufferView(const BufferView &other) = default;
+	BufferView(BufferView &&other) = default;
 	~BufferView();
+
+	BufferView& operator=(const BufferView &other) = default;
+	BufferView& operator=(BufferView &&other) = default;
 
 	void draw(i64 x,i64 y,i64 w,i64 h);
 	void draw(); //uses last coordinates

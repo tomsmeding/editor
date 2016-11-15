@@ -10,6 +10,18 @@ Buffer::Cursor::Cursor(i64 x,i64 y)
 	{}
 
 
+Buffer::Buffer(Buffer &&other)
+		:tb(move(other.tb)),cursors(move(other.cursors)){
+	other.cursors.emplace_back(0,0);
+}
+
+Buffer& Buffer::operator=(Buffer &&other){
+	tb=move(other.tb);
+	cursors=move(other.cursors);
+	other.cursors.emplace_back(0,0);
+	return *this;
+}
+
 void Buffer::sortUniqCursors(){
 	sort(cursors.begin(),cursors.end(),[](const Cursor &a,const Cursor &b){
 		return a.y<b.y||(a.y==b.y&&a.x<b.x);
@@ -102,7 +114,7 @@ bool Buffer::backspace(int ntimes){
 					success=false;
 					continue;
 				}
-				const i64 prevlen=tb.linelen(cursors[i].y-1);
+				const i64 prevlen=tb.lineLen(cursors[i].y-1);
 				for(i64 j=0;j<ncursors;j++){
 					if(j==i)continue;
 					if(cursors[j].y>cursors[i].y){
@@ -137,7 +149,7 @@ bool Buffer::forwardDelete(int ntimes){
 	bool success=true;
 	while(ntimes-->0){
 		for(i64 i=0;i<ncursors;i++){
-			const i64 llen=tb.linelen(cursors[i].y);
+			const i64 llen=tb.lineLen(cursors[i].y);
 			if(cursors[i].x==llen){
 				if(cursors[i].y==tb.numLines()-1){
 					success=false;
@@ -185,4 +197,56 @@ void Buffer::addCursor(i64 y,i64 x){
 void Buffer::singleCursor(){
 	sortUniqCursors();
 	cursors.erase(cursors.begin()+1,cursors.end());
+}
+
+void Buffer::moveCursors(Dir dir){
+	if(tb.numLines()==0)return;
+	i64 ncursors=cursors.size();
+	switch(dir){
+		case Dir::up:
+			for(i64 i=0;i<ncursors;i++){
+				if(cursors[i].y==0)cursors[i].x=0;
+				else {
+					cursors[i].y--;
+					if(cursors[i].x>tb.lineLen(cursors[i].y)){
+						cursors[i].x=tb.lineLen(cursors[i].y);
+					}
+				}
+			}
+			break;
+
+		case Dir::right:
+			for(i64 i=0;i<ncursors;i++){
+				if(cursors[i].x!=tb.lineLen(cursors[i].y)){
+					cursors[i].x++;
+				} else if(cursors[i].y!=tb.numLines()){
+					cursors[i].x=0;
+					cursors[i].y++;
+				}
+			}
+			break;
+
+		case Dir::down:
+			for(i64 i=0;i<ncursors;i++){
+				if(cursors[i].y==tb.numLines()-1)cursors[i].x=tb.lineLen(tb.numLines()-1);
+				else {
+					cursors[i].y++;
+					if(cursors[i].x>tb.lineLen(cursors[i].y)){
+						cursors[i].x=tb.lineLen(cursors[i].y);
+					}
+				}
+			}
+			break;
+
+		case Dir::left:
+			for(i64 i=0;i<ncursors;i++){
+				if(cursors[i].x!=0){
+					cursors[i].x--;
+				} else if(cursors[i].y!=0){
+					cursors[i].y--;
+					cursors[i].x=tb.lineLen(cursors[i].y);
+				}
+			}
+			break;
+	}
 }

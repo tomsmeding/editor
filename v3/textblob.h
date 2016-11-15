@@ -22,6 +22,9 @@ public:
 	TextBlob(const TextBlob&) = default;
 	TextBlob(TextBlob&&) = default;
 
+	TextBlob& operator=(const TextBlob &other) = default;
+	TextBlob& operator=(TextBlob &&other) = default;
+
 	bool isInRange(i64 y,i64 x) const;
 	bool isInRangeP1(i64 y,i64 x) const;
 	bool isInRange(i64 y) const;
@@ -48,7 +51,7 @@ public:
 	const string& operator[](i64 y) const;
 
 	i64 numLines() const;
-	i64 linelen(i64 y) const;
+	i64 lineLen(i64 y) const;
 
 	static void _unitTest();
 };

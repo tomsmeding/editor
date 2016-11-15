@@ -191,6 +191,11 @@ bool BufferView::handleKey(int key){
 			buffer.insertText('\n');
 			break;
 
+		case KEY_UP:    buffer.moveCursors(Buffer::Dir::up);    break;
+		case KEY_RIGHT: buffer.moveCursors(Buffer::Dir::right); break;
+		case KEY_DOWN:  buffer.moveCursors(Buffer::Dir::down);  break;
+		case KEY_LEFT:  buffer.moveCursors(Buffer::Dir::left);  break;
+
 		default:
 			if(key>=32&&key<=126){
 				buffer.insertText((char)key);

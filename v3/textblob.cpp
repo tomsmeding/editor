@@ -198,7 +198,7 @@ i64 TextBlob::numLines() const {
 	return lines.size();
 }
 
-i64 TextBlob::linelen(i64 y) const {
+i64 TextBlob::lineLen(i64 y) const {
 	checkInRangeP1(y);
 	if(y==(i64)lines.size())return 0;
 	return lines[y].size();

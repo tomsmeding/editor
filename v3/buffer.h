@@ -17,6 +17,10 @@ public:
 		Cursor(i64 x,i64 y);
 	};
 
+	enum class Dir{
+		up, right, down, left
+	};
+
 private:
 	TextBlob tb;
 	vector<Cursor> cursors;
@@ -26,7 +30,10 @@ private:
 public:
 	Buffer() = default;
 	Buffer(const Buffer&) = default;
-	Buffer(Buffer&&) = default;
+	Buffer(Buffer&&);
+
+	Buffer& operator=(const Buffer &other) = default;
+	Buffer& operator=(Buffer &&other);
 
 	void read(istream &is);
 	void write(ostream &os) const;
@@ -40,6 +47,8 @@ public:
 	void insertText(const string &text);
 	bool backspace(int ntimes=1); //returns whether there was anything to delete
 	bool forwardDelete(int ntimes=1); //returns whether there was anything to delete
+
 	void addCursor(i64 y,i64 x);
-	void singleCursor();
+	void singleCursor(); //discards all but the first cursor
+	void moveCursors(Dir dir);
 };

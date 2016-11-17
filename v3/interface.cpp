@@ -133,6 +133,14 @@ namespace Interface{
 					if(confirmStatus("Close buffer?",true))editor.closeView();
 					break;
 
+				case KEY_ALT+KEY_TAB:
+					editor.setActiveIndex((editor.activeIndex()+1)%editor.numViews());
+					break;
+
+				case KEY_ALT+KEY_SHIFTTAB:
+					editor.setActiveIndex((editor.activeIndex()+editor.numViews()-1)%editor.numViews());
+					break;
+
 				default:
 					if(!editor.handleKey(key)){
 						printStatus("Unknown key");

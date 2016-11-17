@@ -23,6 +23,7 @@ public:
 	BufferView& view(i64 index);
 	const BufferView& view(i64 index) const;
 	i64 activeIndex() const;
+	void setActiveIndex(i64 index);
 
 	void drawActive();
 

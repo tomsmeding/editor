@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "editor.h"
 
 using namespace std;
@@ -30,6 +31,13 @@ i64 Editor::activeIndex() const {
 	return activeidx;
 }
 
+void Editor::setActiveIndex(i64 index){
+	if(index<0||index>=(i64)views.size()){
+		throw out_of_range("Index out of range in Editor::setActiveIndex");
+	}
+	activeidx=index;
+}
+
 void Editor::drawActive(){
 	i64 x,y,w,h;
 	sizeProvider(x,y,w,h);
@@ -46,5 +54,5 @@ void Editor::newView(){
 void Editor::closeView(){
 	views.erase(views.begin()+activeidx);
 	if(views.size()==0)newView();
-	else if(activeidx==views.size())activeidx--;
+	else if(activeidx==(i64)views.size())activeidx--;
 }

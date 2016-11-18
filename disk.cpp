@@ -25,10 +25,10 @@ string resolveTilde(const string &path){
 	if(path.size()==0||path[0]!='~')return path;
 	if(path.size()==1)return getenv("HOME");
 	if(path[1]=='/')return getenv("HOME")+path.substr(1);
-	size_t namelen=path.find('/',1);
-	if(namelen!=string::npos)namelen--;
-	struct passwd *pwd=getpwnam(path.substr(1,namelen).data());
-	return pwd->pw_dir+path.substr(namelen+1);
+	size_t slashidx=path.find('/',1);
+	string name=path.substr(1,slashidx==string::npos ? string::npos : slashidx-1);
+	struct passwd *pwd=getpwnam(name.data());
+	return pwd->pw_dir+path.substr(slashidx);
 }
 
 Maybe<string> writeToFile(string fname,const string &s){

@@ -35,6 +35,9 @@ public:
 	void read(istream &is);
 	void write(ostream &os) const;
 
+	void setText(const string &text);
+	string fullText() const;
+
 	//returns original
 	char replace(i64 y,i64 x,char c);
 

@@ -48,7 +48,7 @@ namespace TextLayout{
 				layout.lines.push_back({
 					.lineNum=1,
 					.fromLineNum=1,
-					.cells={{.c=' ',.error=false,.special=false,.cursor=true}}
+					.cells={{.c=' ',.error=false,.special=false,.cursor=true,.fromX=0}}
 				});
 			}
 		}
@@ -68,9 +68,8 @@ namespace TextLayout{
 				if(currentLine==nullptr){
 					currentLine=newLine(layout);
 				}
-				// if(lineidx==0)currentLine->lineNum=texty+1;
 
-				Cell cellProto={.c='\0',.error=false,.special=false,.cursor=false};
+				Cell cellProto={.c='\0',.error=false,.special=false,.cursor=false,.fromX=lineidx};
 
 				string rep=charRepresentation(bufferLine[lineidx]);
 				if((i64)(currentLine->cells.size()+rep.size())>width){
@@ -113,7 +112,7 @@ namespace TextLayout{
 				if(!currentLine||(i64)currentLine->cells.size()==width){
 					currentLine=newLine(layout);
 				}
-				currentLine->cells.push_back({.c=' ',.error=false,.special=false,.cursor=true});
+				currentLine->cells.push_back({.c=' ',.error=false,.special=false,.cursor=true,.fromX=0});
 			}
 
 			if((i64)layout.lines.size()>=height)break;
@@ -122,6 +121,47 @@ namespace TextLayout{
 		if((i64)layout.lines.size()>height){
 			layout.lines.erase(layout.lines.begin()+height,layout.lines.end());
 		}
+		return layout;
+	}
+
+	Layout oneline(const Buffer &buffer,i64 width,i64 scrollx){
+		Layout layout;
+		layout.lines.push_back({.lineNum=1,.fromLineNum=1,{}});
+		vector<Cell> &cells=layout.lines[0].cells;
+		const vector<Buffer::Cursor> cursors=buffer.getCursors();
+
+		const string line=buffer.getLine(0);
+		for(i64 lineidx=scrollx;lineidx<(i64)line.size();lineidx++){
+			Cell cellProto={.c='\0',.error=false,.special=false,.cursor=false,.fromX=lineidx};
+
+			string rep=charRepresentation(line[lineidx]);
+			if((i64)cells.size()+(i64)rep.size()>width)break;
+
+			cellProto.special=rep.size()>1;
+
+			for(i64 i=0;i<(i64)rep.size();i++){
+				cellProto.c=rep[i];
+				if(i==0){
+					auto it=find_if(
+						cursors.begin(),
+						cursors.end(),
+						[lineidx](const Buffer::Cursor &cur){return cur.x==lineidx;});
+					if(it!=cursors.end()){
+						cellProto.cursor=true;
+					}
+				} else {
+					cellProto.cursor=false;
+				}
+				cells.push_back(cellProto);
+			}
+		}
+
+		if(find_if(cursors.begin(),cursors.end(),
+					[&line](const Buffer::Cursor &cur){return cur.x==(i64)line.size();})
+				!=cursors.end()){
+			cells.push_back({.c=' ',.error=false,.special=false,.cursor=true,.fromX=(i64)line.size()});
+		}
+
 		return layout;
 	}
 	

@@ -1,7 +1,11 @@
 #include <vector>
 #include <termio.h>
 #include "interface.h"
+#include "diskio.h"
 #include "editor.h"
+#include "maybe.h"
+#include "onelinebufferview.h"
+#include "wrappingbufferview.h"
 
 using namespace std;
 
@@ -22,23 +26,24 @@ namespace Interface{
 		}
 	};
 
-	static void printStatus(const char *str){
+	Style statusbarStyle={.fg=9,.bg=9,.bold=true,.ul=false};
+	Style errorStyle={.fg=1,.bg=9,.bold=true,.ul=false};
+
+	static void printStatus(const string &str,Style *style=&statusbarStyle){
 		Size termsize=gettermsize();
 		pushcursor();
 		moveto(0,termsize.h-1);
-		Style style={.fg=9,.bg=9,.bold=true,.ul=false};
-		setstyle(&style);
-		tprintf("%s",str);
+		setstyle(style);
+		tprintf("%s",str.data());
 		popcursor();
 	}
 
-	static bool confirmStatus(const char *str,bool defChoice){
+	static bool confirmStatus(const string &str,bool defChoice){
 		Size termsize=gettermsize();
 		pushcursor();
 		moveto(0,termsize.h-1);
-		Style style={.fg=9,.bg=9,.bold=true,.ul=false};
-		setstyle(&style);
-		tprintf("%s [%s] ",str,defChoice?"Y/n":"y/N");
+		setstyle(&statusbarStyle);
+		tprintf("%s [%s] ",str.data(),defChoice?"Y/n":"y/N");
 		redraw();
 		int key=tgetkey();
 		bool choice;
@@ -51,6 +56,28 @@ namespace Interface{
 		redraw();
 		popcursor();
 		return choice;
+	}
+
+	static Maybe<string> askStatus(const string &prompt,const string &defvalue){
+		Size termsize=gettermsize();
+		pushcursor();
+		moveto(0,termsize.h-1);
+		setstyle(&statusbarStyle);
+		i64 offset=tprintf("%s ",prompt.data());
+		OnelineBufferView lineView(offset,termsize.h-1,termsize.w-offset);
+		lineView.setText(defvalue);
+		bool submit;
+		while(true){
+			lineView.draw();
+			redraw();
+			int key=tgetkey();
+			if(key==KEY_CR||key==KEY_LF){submit=true; break;}
+			else if(key==KEY_ESC){submit=false; break;}
+			if(!lineView.handleKey(key))bel();
+		}
+		popcursor();
+		if(submit)return {lineView.fullText()};
+		else return {};
 	}
 
 	void show(){
@@ -132,6 +159,23 @@ namespace Interface{
 				case KEY_CTRL+'W':
 					if(confirmStatus("Close buffer?",true))editor.closeView();
 					break;
+
+				case KEY_CTRL+'S':{
+					WrappingBufferView &view=editor.view(activeidx);
+					Maybe<string> mname=askStatus("Save: ",view.getName());
+					if(mname.isJust()){
+						const string &fname=mname.fromJust();
+						view.setName(fname);
+						string text=view.fullText();
+						try {
+							DiskIO::writeFile(fname,text);
+							printStatus("Saved to '"+fname+"'");
+						} catch(DiskIO::DiskError e){
+							printStatus(e.what(),&errorStyle);
+						}
+					}
+					break;
+				}
 
 				case KEY_ALT+KEY_TAB:
 					editor.setActiveIndex((editor.activeIndex()+1)%editor.numViews());

@@ -61,10 +61,23 @@ void TextBlob::read(istream &is){
 }
 
 void TextBlob::write(ostream &os) const {
-	for(const auto &line : lines){
+	for(const string &line : lines){
 		os<<line<<'\n';
 	}
 	os<<flush;
+}
+
+void TextBlob::setText(const string &text){
+	lines.clear();
+	insertString(0,0,text);
+}
+
+string TextBlob::fullText() const {
+	string res;
+	for(const string &line : lines){
+		res+=line+'\n';
+	}
+	return res;
 }
 
 char TextBlob::replace(i64 y,i64 x,char c){

@@ -19,11 +19,11 @@ i64 Editor::numViews() const {
 	return views.size();
 }
 
-BufferView& Editor::view(i64 index){
+WrappingBufferView& Editor::view(i64 index){
 	return views[index];
 }
 
-const BufferView& Editor::view(i64 index) const {
+const WrappingBufferView& Editor::view(i64 index) const {
 	return views[index];
 }
 

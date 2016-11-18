@@ -43,8 +43,20 @@ void Buffer::write(ostream &os) const {
 	tb.write(os);
 }
 
+void Buffer::setText(const string &text){
+	tb.setText(text);
+}
+
+string Buffer::fullText() const {
+	return tb.fullText();
+}
+
 i64 Buffer::numLines() const {
 	return tb.numLines();
+}
+
+i64 Buffer::lineLen(i64 y) const {
+	return tb.lineLen(y);
 }
 
 vector<Buffer::Cursor> Buffer::getCursors() const {
@@ -192,6 +204,20 @@ void Buffer::addCursor(i64 y,i64 x){
 	}
 	cursors.emplace_back(x,y);
 	sortUniqCursors();
+}
+
+void Buffer::setCursor(i64 y,i64 x){
+	if(tb.numLines()==0){
+		if(x!=0||y!=0){
+			throw out_of_range("Position y="+to_string(y)+" x="+to_string(x)+" not in range of empty Buffer");
+		}
+	} else {
+		if(!tb.isInRange(y)||!tb.isInRangeP1(y,x)){
+			throw out_of_range("Position y="+to_string(y)+" x="+to_string(x)+" not in range of Buffer");
+		}
+	}
+	cursors.clear();
+	cursors.emplace_back(x,y);
 }
 
 void Buffer::singleCursor(){

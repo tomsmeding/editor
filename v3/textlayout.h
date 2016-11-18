@@ -13,6 +13,7 @@ namespace TextLayout{
 	struct Cell{
 		char c;
 		bool error,special,cursor;
+		i64 fromX; //position in line the cell is a part of
 	};
 
 	struct Line{
@@ -27,5 +28,6 @@ namespace TextLayout{
 
 
 	Layout wrap(const Buffer &buffer,i64 width,i64 height,i64 scrolly);
+	Layout oneline(const Buffer &buffer,i64 width,i64 scrollx);
 
 }

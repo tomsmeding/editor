@@ -38,7 +38,11 @@ public:
 	void read(istream &is);
 	void write(ostream &os) const;
 
+	void setText(const string &text);
+	string fullText() const;
+
 	i64 numLines() const;
+	i64 lineLen(i64 y) const;
 	vector<Cursor> getCursors() const; //returns sorted and uniq'ed in buffer order
 	string getLine(i64 y) const;
 	char getChar(i64 y,i64 x) const;
@@ -49,6 +53,7 @@ public:
 	bool forwardDelete(int ntimes=1); //returns whether there was anything to delete
 
 	void addCursor(i64 y,i64 x);
+	void setCursor(i64 y,i64 x);
 	void singleCursor(); //discards all but the first cursor
 	void moveCursors(Dir dir);
 };

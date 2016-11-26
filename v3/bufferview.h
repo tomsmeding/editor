@@ -24,4 +24,7 @@ public:
 
 	//returns whether handled
 	bool handleKey(int key);
+
+	bool isDirty() const;
+	void setClean();
 };

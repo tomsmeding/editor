@@ -29,7 +29,13 @@ namespace Interface{
 	Style statusbarStyle={.fg=9,.bg=9,.bold=true,.ul=false};
 	Style errorStyle={.fg=1,.bg=9,.bold=true,.ul=false};
 
+	static void clearStatus(){
+		Size termsize=gettermsize();
+		fillrect(0,termsize.h-1,termsize.w,1,' ');
+	}
+
 	static void printStatus(const string &str,Style *style=&statusbarStyle){
+		clearStatus();
 		Size termsize=gettermsize();
 		pushcursor();
 		moveto(0,termsize.h-1);
@@ -80,6 +86,42 @@ namespace Interface{
 		else return {};
 	}
 
+	static void saveView(WrappingBufferView &view,bool askName){
+		if(askName){
+			Maybe<string> mname=askStatus("Save:",view.getName());
+			if(mname.isJust()){
+				view.setName(mname.fromJust());
+			} else {
+				return;
+			}
+		}
+
+		const string &fname=view.getName();
+		try {
+			DiskIO::writeFile(fname,view.fullText());
+			printStatus("Saved to '"+fname+"'");
+			view.setClean();
+		} catch(DiskIO::DiskError e){
+			printStatus(e.what(),&errorStyle);
+		}
+	}
+
+	static string getTabName(const WrappingBufferView &view){
+		string name=view.getName().size()==0 ? "<New File>" : view.getName();
+		if(view.isDirty()){
+			name+="*";
+		}
+		return name;
+	}
+
+	static bool closeViewCheck(Editor &editor,i64 index){
+		if(editor.view(index).isDirty()&&!confirmStatus("Unsaved changes. Close buffer?",false)){
+			return false;
+		}
+		editor.closeView(index);
+		return true;
+	}
+
 	void show(){
 		TermioRAII termioRAII;
 		i64 tabscroll=0;
@@ -94,11 +136,15 @@ namespace Interface{
 
 			i64 nviews=editor.numViews();
 			i64 tabpos[nviews],tabwid[nviews];
+			vector<string> tabname;
+			for(i64 i=0;i<nviews;i++){
+				tabname.push_back(getTabName(editor.view(i)));
+			}
 			tabpos[0]=0;
-			tabwid[0]=min((int)editor.view(0).getName().size()+2,termsize.w-4);
+			tabwid[0]=min((i64)tabname[0].size()+2,(i64)termsize.w-4);
 			for(i64 i=1;i<nviews;i++){
 				tabpos[i]=tabpos[i-1]+tabwid[i-1];
-				tabwid[i]=min((int)editor.view(i).getName().size()+2,termsize.w-4);
+				tabwid[i]=min((i64)tabname[i].size()+2,(i64)termsize.w-4);
 			}
 
 			i64 activeidx=editor.activeIndex();
@@ -117,7 +163,7 @@ namespace Interface{
 			for(i64 i=0;i<nviews;i++){
 				Style style={.fg=7,.bg=i==activeidx?4:9,.bold=false,.ul=false};
 				setstyle(&style);
-				const string &name=editor.view(i).getName();
+				const string &name=tabname[i];
 				if(tabpos[i]<tabscroll&&tabpos[i]+tabwid[i]>=tabscroll){
 					if(tabpos[i]+tabwid[i]==tabscroll){
 						tputc(' ');
@@ -150,32 +196,36 @@ namespace Interface{
 			cerr<<"tgetkey -> "<<key<<endl;
 			switch(key){
 				case KEY_CTRL+'Q':
-					return;
+					if(confirmStatus("Quit editor?",true)){
+						while(editor.numViews()>1){
+							if(!closeViewCheck(editor,0)){
+								editor.setActiveIndex(0);
+								break;
+							}
+						}
+						if(!closeViewCheck(editor,0)){ // close the last one
+							editor.setActiveIndex(0);
+							break;
+						}
+						return;
+					}
+					break;
 
 				case KEY_CTRL+'N':
 					editor.newView();
 					break;
 
 				case KEY_CTRL+'W':
-					if(confirmStatus("Close buffer?",true))editor.closeView();
+					closeViewCheck(editor,activeidx);
 					break;
 
-				case KEY_CTRL+'S':{
-					WrappingBufferView &view=editor.view(activeidx);
-					Maybe<string> mname=askStatus("Save: ",view.getName());
-					if(mname.isJust()){
-						const string &fname=mname.fromJust();
-						view.setName(fname);
-						string text=view.fullText();
-						try {
-							DiskIO::writeFile(fname,text);
-							printStatus("Saved to '"+fname+"'");
-						} catch(DiskIO::DiskError e){
-							printStatus(e.what(),&errorStyle);
-						}
-					}
+				case KEY_CTRL+'S':
+					saveView(editor.view(activeidx),editor.view(activeidx).getName().size()==0);
 					break;
-				}
+
+				case KEY_CTRLALT+'S':
+					saveView(editor.view(activeidx),true);
+					break;
 
 				case KEY_ALT+KEY_TAB:
 					editor.setActiveIndex((editor.activeIndex()+1)%editor.numViews());
@@ -187,7 +237,7 @@ namespace Interface{
 
 				default:
 					if(!editor.handleKey(key)){
-						printStatus("Unknown key");
+						printStatus("Unknown command");
 						bel();
 					}
 					break;

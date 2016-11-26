@@ -30,4 +30,5 @@ public:
 
 	void newView();
 	void closeView();
+	void closeView(i64 index);
 };

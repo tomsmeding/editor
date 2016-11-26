@@ -13,6 +13,7 @@ class OnelineBufferView : public BufferView{
 	i64 drawx,drawy,draww;
 	i64 scrollx=0;
 	bool justHandledKey=false;
+	bool dirty=false;
 
 public:
 	OnelineBufferView() = delete;
@@ -32,4 +33,7 @@ public:
 
 	//returns whether handled
 	bool handleKey(int key);
+
+	bool isDirty() const;
+	void setClean();
 };

@@ -182,15 +182,18 @@ bool WrappingBufferView::handleKey(int key){
 	switch(key){
 		case KEY_BACKSPACE:
 			if(!buffer.backspace())bel();
+			else dirty=true;
 			break;
 
 		case KEY_DELETE:
 			if(!buffer.forwardDelete())bel();
+			else dirty=true;
 			break;
 
 		case KEY_LF:
 		case KEY_CR:
 			buffer.insertText('\n');
+			dirty=true;
 			break;
 
 		case KEY_UP:    buffer.moveCursors(Buffer::Dir::up);    break;
@@ -201,10 +204,19 @@ bool WrappingBufferView::handleKey(int key){
 		default:
 			if(key>=32&&key<=126){
 				buffer.insertText((char)key);
+				dirty=true;
 			} else {
 				return false;
 			}
 	}
 	justHandledKey=true;
 	return true;
+}
+
+bool WrappingBufferView::isDirty() const {
+	return dirty;
+}
+
+void WrappingBufferView::setClean(){
+	dirty=false;
 }

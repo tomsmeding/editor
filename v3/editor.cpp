@@ -48,11 +48,18 @@ void Editor::newView(){
 	i64 x,y,w,h;
 	sizeProvider(x,y,w,h);
 	if(views.size()!=0)activeidx++;
-	views.emplace(views.begin()+activeidx,"<New file>",x,y,w,h);
+	views.emplace(views.begin()+activeidx,"",x,y,w,h);
 }
 
 void Editor::closeView(){
-	views.erase(views.begin()+activeidx);
+	closeView(activeidx);
+}
+
+void Editor::closeView(i64 index){
+	if(index<0||index>=(i64)views.size()){
+		throw out_of_range("Index out of range in Editor::closeView(index)");
+	}
+	views.erase(views.begin()+index);
 	if(views.size()==0)newView();
 	else if(activeidx==(i64)views.size())activeidx--;
 }

@@ -14,6 +14,7 @@ class WrappingBufferView : public BufferView{
 	string name;
 	i64 scrolly=0;
 	bool justHandledKey=false;
+	bool dirty=false;
 
 public:
 	WrappingBufferView(const string &name,i64 x,i64 y,i64 w,i64 h);
@@ -30,9 +31,12 @@ public:
 	void draw(i64 x,i64 y,i64 w,i64 h);
 	void draw(); //uses last coordinates
 
-	void setName(const string &newname);
-	const string& getName() const;
-
 	//returns whether handled
 	bool handleKey(int key);
+
+	bool isDirty() const;
+	void setClean();
+
+	void setName(const string &newname);
+	const string& getName() const;
 };

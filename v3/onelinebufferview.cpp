@@ -150,10 +150,12 @@ bool OnelineBufferView::handleKey(int key){
 	switch(key){
 		case KEY_BACKSPACE:
 			if(!buffer.backspace())bel();
+			else dirty=true;
 			break;
 
 		case KEY_DELETE:
 			if(!buffer.forwardDelete())bel();
+			else dirty=true;
 			break;
 
 		case KEY_UP:    buffer.moveCursors(Buffer::Dir::up);    break;
@@ -164,10 +166,19 @@ bool OnelineBufferView::handleKey(int key){
 		default:
 			if(key>=32&&key<=126){
 				buffer.insertText((char)key);
+				dirty=true;
 			} else {
 				return false;
 			}
 	}
 	justHandledKey=true;
 	return true;
+}
+
+bool OnelineBufferView::isDirty() const {
+	return dirty;
+}
+
+void OnelineBufferView::setClean(){
+	dirty=false;
 }

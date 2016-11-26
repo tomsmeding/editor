@@ -122,6 +122,121 @@ namespace Interface{
 		return true;
 	}
 
+	static void drawTabs(Editor &editor,i64 &tabscroll){
+		Size termsize=gettermsize();
+
+		i64 nviews=editor.numViews();
+		i64 tabpos[nviews],tabwid[nviews];
+		vector<string> tabname;
+		for(i64 i=0;i<nviews;i++){
+			tabname.push_back(getTabName(editor.view(i)));
+		}
+		tabpos[0]=0;
+		tabwid[0]=min((i64)tabname[0].size()+2,(i64)termsize.w-4);
+		for(i64 i=1;i<nviews;i++){
+			tabpos[i]=tabpos[i-1]+tabwid[i-1];
+			tabwid[i]=min((i64)tabname[i].size()+2,(i64)termsize.w-4);
+		}
+
+		i64 activeidx=editor.activeIndex();
+
+		if(tabpos[activeidx]-tabscroll<0){
+			tabscroll=max(tabpos[activeidx]-1,0LL);
+		} else if(tabpos[activeidx]+tabwid[activeidx]-tabscroll>=termsize.w){
+			tabscroll=max(tabpos[activeidx]+tabwid[activeidx]-(termsize.w-2),0LL);
+		}
+
+		moveto(0,0);
+		Style blankStyle={.fg=9,.bg=9,.bold=false,.ul=false};
+		setstyle(&blankStyle);
+		fillrect(0,0,termsize.w,1,' ');
+
+		for(i64 i=0;i<nviews;i++){
+			Style style={.fg=7,.bg=i==activeidx?4:9,.bold=false,.ul=false};
+			setstyle(&style);
+			const string &name=tabname[i];
+			if(tabpos[i]<tabscroll&&tabpos[i]+tabwid[i]>=tabscroll){
+				if(tabpos[i]+tabwid[i]==tabscroll){
+					tputc(' ');
+				} else {
+					for(i64 j=tabscroll-tabpos[i]-1;j<tabwid[i];j++){
+						tputc(name[j]);
+					}
+					tputc(' ');
+				}
+			} else if(tabpos[i]>=tabscroll&&tabpos[i]+tabwid[i]<tabscroll+termsize.w){
+				tputc(' ');
+				for(i64 j=0;j<tabwid[i]-2;j++){
+					tputc(name[j]);
+				}
+				tputc(' ');
+			} else if(tabpos[i]<tabscroll+termsize.w&&tabpos[i]+tabwid[i]>=tabscroll+termsize.w){
+				tputc(' ');
+				for(i64 j=0;j<tabscroll+termsize.w-tabpos[i]-1;j++){
+					tputc(name[j]);
+				}
+				break;
+			}
+		}
+	}
+
+	bool getCommand(Editor &editor){
+		i64 activeidx=editor.activeIndex();
+
+		int key=tgetkey();
+		cerr<<"tgetkey -> "<<key<<endl;
+		switch(key){
+			case KEY_CTRL+'Q':
+				if(confirmStatus("Quit editor?",true)){
+					while(editor.numViews()>1){
+						if(!closeViewCheck(editor,0)){
+							editor.setActiveIndex(0);
+							break;
+						}
+					}
+					if(!closeViewCheck(editor,0)){ // close the last one
+						editor.setActiveIndex(0);
+						break;
+					}
+					return true;
+				}
+				break;
+
+			case KEY_CTRL+'N':
+				editor.newView();
+				break;
+
+			case KEY_CTRL+'W':
+				closeViewCheck(editor,activeidx);
+				break;
+
+			case KEY_CTRL+'S':
+				saveView(editor.view(activeidx),editor.view(activeidx).getName().size()==0);
+				break;
+
+			case KEY_CTRLALT+'S':
+				saveView(editor.view(activeidx),true);
+				break;
+
+			case KEY_ALT+KEY_TAB:
+				editor.setActiveIndex((editor.activeIndex()+1)%editor.numViews());
+				break;
+
+			case KEY_ALT+KEY_SHIFTTAB:
+				editor.setActiveIndex((editor.activeIndex()+editor.numViews()-1)%editor.numViews());
+				break;
+
+			default:
+				if(!editor.handleKey(key)){
+					printStatus("Unknown command");
+					bel();
+				}
+				break;
+		}
+
+		return false;
+	}
+
 	void show(){
 		TermioRAII termioRAII;
 		i64 tabscroll=0;
@@ -132,115 +247,14 @@ namespace Interface{
 		});
 
 		while(true){
-			Size termsize=gettermsize();
-
-			i64 nviews=editor.numViews();
-			i64 tabpos[nviews],tabwid[nviews];
-			vector<string> tabname;
-			for(i64 i=0;i<nviews;i++){
-				tabname.push_back(getTabName(editor.view(i)));
-			}
-			tabpos[0]=0;
-			tabwid[0]=min((i64)tabname[0].size()+2,(i64)termsize.w-4);
-			for(i64 i=1;i<nviews;i++){
-				tabpos[i]=tabpos[i-1]+tabwid[i-1];
-				tabwid[i]=min((i64)tabname[i].size()+2,(i64)termsize.w-4);
-			}
-
-			i64 activeidx=editor.activeIndex();
-
-			if(tabpos[activeidx]-tabscroll<0){
-				tabscroll=max(tabpos[activeidx]-1,0LL);
-			} else if(tabpos[activeidx]+tabwid[activeidx]-tabscroll>=termsize.w){
-				tabscroll=max(tabpos[activeidx]+tabwid[activeidx]-(termsize.w-2),0LL);
-			}
-
-			moveto(0,0);
-			Style blankStyle={.fg=9,.bg=9,.bold=false,.ul=false};
-			setstyle(&blankStyle);
-			fillrect(0,0,termsize.w,1,' ');
-
-			for(i64 i=0;i<nviews;i++){
-				Style style={.fg=7,.bg=i==activeidx?4:9,.bold=false,.ul=false};
-				setstyle(&style);
-				const string &name=tabname[i];
-				if(tabpos[i]<tabscroll&&tabpos[i]+tabwid[i]>=tabscroll){
-					if(tabpos[i]+tabwid[i]==tabscroll){
-						tputc(' ');
-					} else {
-						for(i64 j=tabscroll-tabpos[i]-1;j<tabwid[i];j++){
-							tputc(name[j]);
-						}
-						tputc(' ');
-					}
-				} else if(tabpos[i]>=tabscroll&&tabpos[i]+tabwid[i]<tabscroll+termsize.w){
-					tputc(' ');
-					for(i64 j=0;j<tabwid[i]-2;j++){
-						tputc(name[j]);
-					}
-					tputc(' ');
-				} else if(tabpos[i]<tabscroll+termsize.w&&tabpos[i]+tabwid[i]>=tabscroll+termsize.w){
-					tputc(' ');
-					for(i64 j=0;j<tabscroll+termsize.w-tabpos[i]-1;j++){
-						tputc(name[j]);
-					}
-					break;
-				}
-			}
+			drawTabs(editor,tabscroll);
 
 			editor.drawActive();
 
 			redraw();
 
-			int key=tgetkey();
-			cerr<<"tgetkey -> "<<key<<endl;
-			switch(key){
-				case KEY_CTRL+'Q':
-					if(confirmStatus("Quit editor?",true)){
-						while(editor.numViews()>1){
-							if(!closeViewCheck(editor,0)){
-								editor.setActiveIndex(0);
-								break;
-							}
-						}
-						if(!closeViewCheck(editor,0)){ // close the last one
-							editor.setActiveIndex(0);
-							break;
-						}
-						return;
-					}
-					break;
-
-				case KEY_CTRL+'N':
-					editor.newView();
-					break;
-
-				case KEY_CTRL+'W':
-					closeViewCheck(editor,activeidx);
-					break;
-
-				case KEY_CTRL+'S':
-					saveView(editor.view(activeidx),editor.view(activeidx).getName().size()==0);
-					break;
-
-				case KEY_CTRLALT+'S':
-					saveView(editor.view(activeidx),true);
-					break;
-
-				case KEY_ALT+KEY_TAB:
-					editor.setActiveIndex((editor.activeIndex()+1)%editor.numViews());
-					break;
-
-				case KEY_ALT+KEY_SHIFTTAB:
-					editor.setActiveIndex((editor.activeIndex()+editor.numViews()-1)%editor.numViews());
-					break;
-
-				default:
-					if(!editor.handleKey(key)){
-						printStatus("Unknown command");
-						bel();
-					}
-					break;
+			if(getCommand(editor)){
+				break;
 			}
 		}
 	}

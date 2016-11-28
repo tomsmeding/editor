@@ -40,6 +40,32 @@ Colour ansiTable[8]={black,red,green,yellow,blue,magenta,cyan,white};
 unsigned int screencolours;
 
 unordered_map<string,string> tputcache;
+enum KEY_ACTION{
+			KEY_NULL = 0,       /* NULL */
+			CTRL_C = 3,         /* Ctrl-c */
+			CTRL_D = 4,         /* Ctrl-d */
+			CTRL_F = 6,         /* Ctrl-f */
+			CTRL_H = 8,         /* Ctrl-h */
+			TAB = 9,            /* Tab */
+			CTRL_L = 12,        /* Ctrl+l */
+			ENTER = 13,         /* Enter */
+			CTRL_Q = 17,        /* Ctrl-q */
+			CTRL_S = 19,        /* Ctrl-s */
+			CTRL_U = 21,        /* Ctrl-u */
+			ESC = 27,           /* Escape */
+			BACKSPACE =  127,   /* Backspace */
+			/* The following are just soft codes, not really reported by the
+			 * terminal directly. */
+			ARROW_LEFT = 1000,
+			ARROW_RIGHT,
+			ARROW_UP,
+			ARROW_DOWN,
+			DEL_KEY,
+			HOME_KEY,
+			END_KEY,
+			PAGE_UP,
+			PAGE_DOWN
+};
 
 /*
 alternate screen: smcup, rmcup
@@ -116,8 +142,10 @@ void initscreen(void){
 		|IEXTEN //don't handle things like ^V specially
 		//|ISIG //disable ^C ^\ and ^Z
 		);
-	tios.c_cc[VMIN]=1; //read one char at a time
-	tios.c_cc[VTIME]=0; //no timeout on reading, make it a blocking read
+	tios.c_cc[VMIN]=0; //return each byte, or zero for timeout.
+	tios.c_cc[VTIME]=1; //100 ms timeout( unit is tens of second)
+						// This prevents pressing ESC in normal mode from
+						// locking up.
 	tcsetattr(0,TCSAFLUSH,&tios);
 
 	try {
@@ -209,6 +237,76 @@ void clearMarkup(void){
 }
 
 
+
+/* Read a key from the terminal put in raw mode, trying to handle
+ * escape sequences. */
+int editorReadKey() {
+	int fd = STDIN_FILENO;
+    int nread;
+    char c, seq[3];
+    while ((nread = read(fd,&c,1)) == 0);
+    if (nread == -1) exit(1);
+
+    while(1) {
+        switch(c) {
+        case ESC:    /* escape sequence */
+            /* If this is just an ESC, we'll timeout here. */
+            if (read(fd,seq,1) == 0) return ESC;
+            if (read(fd,seq+1,1) == 0) return ESC;
+
+            /* ESC [ sequences. */
+            if (seq[0] == '[') {
+                if (seq[1] >= '0' && seq[1] <= '9') {
+                    /* Extended escape, read additional byte. */
+                    if (read(fd,seq+2,1) == 0) return ESC;
+                    if (seq[2] == '~') {
+                        switch(seq[1]) {
+                        case '3': return DEL_KEY;
+                        case '5': return PAGE_UP;
+                        case '6': return PAGE_DOWN;
+                        }
+                    }
+                } else {
+                    switch(seq[1]) {
+                    case 'A': return ARROW_UP;
+                    case 'B': return ARROW_DOWN;
+                    case 'C': return ARROW_RIGHT;
+                    case 'D': return ARROW_LEFT;
+                    case 'H': return HOME_KEY;
+                    case 'F': return END_KEY;
+                    }
+                }
+            }
+
+            /* ESC O sequences. */
+            else if (seq[0] == 'O') {
+                switch(seq[1]) {
+                case 'H': return HOME_KEY;
+                case 'F': return END_KEY;
+                }
+            }
+            break;
+        default:
+            return c;
+        }
+    }
+}
+// These change the way input works so that getLineStdin works properly
+void disableTimeout() {
+	struct termios tios;
+
+	tios.c_cc[VMIN] = 1;
+	tios.c_cc[VTIME] = 0;
+	tcsetattr(0, TCSAFLUSH, &tios);
+}
+void enableTimeout() { 
+	struct termios tios;
+	
+	tios.c_cc[VMIN] = 0;
+	tios.c_cc[VTIME] = 1;
+	tcsetattr(0, TCSAFLUSH, &tios);
+}
+
 string getLineStdin(unsigned int startx){
 	//TODO more editing keys
 	unsigned int scrwidth,scrheight;
@@ -217,9 +315,11 @@ string getLineStdin(unsigned int startx){
 	string line,prettyline;
 	unsigned int scrollx=0;
 	while(true){
+		// Kind of a hack
+		disableTimeout();
 		char c=cin.get();
 		if(c=='\n'||c=='\r')break;
-		else if(c=='\x7F'){ //backspace
+		else if(c==BACKSPACE){ //backspace
 			if(line.size()){
 				char back=line.back();
 				line.pop_back();
@@ -237,7 +337,8 @@ string getLineStdin(unsigned int startx){
 					cout<<cubstr<<string(pret.size(),' ')<<cubstr;
 				}
 			} else cout<<gettput("bel");
-		} else if(c=='\x1B'){ //escape
+		} else if(c==ESC){ //escape
+			enableTimeout();
 			return "";
 		} else {
 			string pret=Screen::prettychar(c);
@@ -255,6 +356,7 @@ string getLineStdin(unsigned int startx){
 			}
 		}
 	}
+	enableTimeout();
 	return line;
 }
 
@@ -553,7 +655,7 @@ CommandRet editorCommandVerboseChar(vector<string>,string cmd0,bool){
 	switchColourBg(Inter::screenbg);
 	cout<<gettput("clear")<<flush;
 	while(true){
-		char c=cin.get();
+		int c=editorReadKey();
 		string s=to_string((int)c)+" ("+Screen::prettychar(c)+')';
 		if(c=='\x16'){
 			Screen::redraw(true);
@@ -601,10 +703,13 @@ CommandRet evalEditorCommand(string scmd){
 #undef CALL_EDITOR_COMMAND_RETURN_NOTNEXT
 #undef CALL_EDITOR_COMMAND_RETURN_FAILQUIT
 
+
+
+
 //returns given char unless it was ':'
 Either<char,CommandRet> waitForKeyOrCommand(void){
 	Inter::printStatus("Enter key or type command to continue");
-	char c=cin.get();
+	int c=editorReadKey();
 	if(c==':'){
 		Screen::redraw(true);
 		string cmd=getEditorCommand();
@@ -617,7 +722,53 @@ Either<char,CommandRet> waitForKeyOrCommand(void){
 	return Either<char,CommandRet>::Left(c);
 }
 
+// Right now, we need to pass in the filebuffers. By reference to improve
+// performance a little bit.
+void moveLeft(unsigned int repcount, Inter::Filebuffer &fbuf){
+	if(fbuf.curx>=repcount)fbuf.curx-=repcount;
+	else {
+		fbuf.curx=0;
+		cout<<gettput("bel")<<flush;
+	}
+}
 
+void moveRight(unsigned int repcount, Inter::Filebuffer &fbuf){
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	if(fbuf.curx+repcount<llen)fbuf.curx+=repcount;
+	else {
+		fbuf.curx=llen==0?0:llen-1;
+		cout<<gettput("bel")<<flush;
+	}
+}
+
+
+void moveUp(unsigned int repcount, Inter::Filebuffer &fbuf){
+	if(fbuf.cury>=repcount)fbuf.cury-=repcount;
+	else {
+		fbuf.cury=0;
+		cout<<gettput("bel")<<flush;
+	}
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	if(llen==0)fbuf.curx=0;
+	else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
+}
+
+
+void moveDown(unsigned int repcount, Inter::Filebuffer &fbuf){
+	const unsigned int nln=fbuf.contents.numlines();
+	if(fbuf.cury+repcount<nln)fbuf.cury+=repcount;
+	else {
+		fbuf.cury=nln==0?0:nln-1;
+		cout<<gettput("bel")<<flush;
+	}
+	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
+	if(llen==0)fbuf.curx=0;
+	else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
+}
+
+
+
+// Insert mode for inserting input.
 void insertModeRunLoop(void){
 	if(Inter::frontBuffer==-1)
 		throw logic_error("Cannot enter insert mode in no buffer");
@@ -625,9 +776,9 @@ void insertModeRunLoop(void){
 	Inter::printStatus("[INSERT]",Inter::textfg,true);
 	Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
 	while(true){
-		unsigned char c=cin.get();
-		if(c=='\x1B')break; //escape
-		if(c=='\x7F'){ //backspace
+		int c=editorReadKey();
+		if(c==ESC)break; //escape
+		if(c==BACKSPACE){ //backspace
 			if(fbuf.curx==0){
 				if(fbuf.cury==0){
 					cout<<gettput("bel")<<flush;
@@ -642,6 +793,26 @@ void insertModeRunLoop(void){
 				fbuf.curx--;
 			}
 			fbuf.dirty=true;
+			Screen::redraw();
+			continue;
+		}
+		if(c==ARROW_RIGHT) {
+			moveRight(1, fbuf);
+			Screen::redraw();
+			continue;
+		}
+		if(c==ARROW_LEFT) {
+			moveLeft(1, fbuf);
+			Screen::redraw();
+			continue;
+		}
+		if(c==ARROW_UP) {
+			moveUp(1, fbuf);
+			Screen::redraw();
+			continue;
+		}
+		if(c==ARROW_DOWN) {
+			moveDown(1, fbuf);
 			Screen::redraw();
 			continue;
 		}
@@ -712,51 +883,6 @@ CharCat charCategory(char c){
 	else return CC_PUNCT;
 }
 
-// Right now, we need to pass in the filebuffers. By reference to improve
-// performance a little bit.
-void moveLeft(unsigned int repcount, Inter::Filebuffer &fbuf){
-	if(fbuf.curx>=repcount)fbuf.curx-=repcount;
-	else {
-		fbuf.curx=0;
-		cout<<gettput("bel")<<flush;
-	}
-}
-
-void moveRight(unsigned int repcount, Inter::Filebuffer &fbuf){
-	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
-	if(fbuf.curx+repcount<llen)fbuf.curx+=repcount;
-	else {
-		fbuf.curx=llen==0?0:llen-1;
-		cout<<gettput("bel")<<flush;
-	}
-}
-
-
-void moveUp(unsigned int repcount, Inter::Filebuffer &fbuf){
-	if(fbuf.cury>=repcount)fbuf.cury-=repcount;
-	else {
-		fbuf.cury=0;
-		cout<<gettput("bel")<<flush;
-	}
-	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
-	if(llen==0)fbuf.curx=0;
-	else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
-}
-
-
-void moveDown(unsigned int repcount, Inter::Filebuffer &fbuf){
-	const unsigned int nln=fbuf.contents.numlines();
-	if(fbuf.cury+repcount<nln)fbuf.cury+=repcount;
-	else {
-		fbuf.cury=nln==0?0:nln-1;
-		cout<<gettput("bel")<<flush;
-	}
-	const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
-	if(llen==0)fbuf.curx=0;
-	else if(fbuf.curx>0&&fbuf.curx>=llen)fbuf.curx=llen-1;
-}
-
-
 int runloop(void){
 	unsigned int repcount;
 	bool repcountset;
@@ -766,14 +892,14 @@ int runloop(void){
 			else Inter::frontBuffer=Inter::buffers.size()-1;
 		}
 		Inter::Filebuffer &fbuf=Inter::buffers[Inter::frontBuffer];
-		char c=cin.get();
+		int c=editorReadKey();
 		repcount=1;
 		repcountset=false;
 		if(c>='1'&&c<='9'){
 			repcountset=true;
 			repcount=c-'0';
 			while(true){
-				c=cin.get();
+				c=editorReadKey();
 				if(c<'0'||c>'9')break;
 				repcount=10*repcount+c-'0';
 			}
@@ -785,66 +911,50 @@ int runloop(void){
 				while(repcount-->0){
 					CommandRet ret=evalEditorCommand(cmd);
 					if(ret==CR_FAIL)return 1;
-					if(ret==CR_QUIT)return 0;
+					if(ret==CR_QUIT){
+						//This resets the terminal to how it should be
+						endscreen();
+						return 0;
+					}
 					if(ret==CR_NEXT)break;
 				}
 			}
 			Screen::gotoFrontBufferCursor();
 			break;
 		}
-		case '\x1B':{ // esc
-			char c2=cin.get();
-			if (c2==0) { // Just a regular escape.
-				repcount=1;
-				Inter::clearStatus();
-				Screen::redraw();
-				break;
-			}
-			c2=cin.get(); // Additional escape sequences to be defined
-			if (c2=='[') {
-				if (c2>='0' && c2<='9') {
-					c2=cin.get();
-					if (c2=='~') break;
-				}
-			}
-			else {
-				switch(c2) {
-					case 'A':// UP arrow
-						moveUp(repcount, fbuf);
-						Screen::redraw();
-						break;
-					case 'B':// DOWN arrow
-						moveDown(repcount, fbuf);
-						Screen::redraw();
-						break;
-					case 'C':// RIGHT arrow
-						moveRight(repcount, fbuf);
-						Screen::redraw();
-						break;
-					case 'D':// LEFT arrow
-						moveLeft(repcount, fbuf);
-						Screen::redraw();
-						break;
-				}
-			}
-			break;//Hmm, I dunno
-		}
-		case 'h':
-			moveLeft(repcount, fbuf);
-			Screen::redraw();
-			break;
-		case 'j':{
-			moveDown(repcount, fbuf);
+		case ESC:{
+			repcount=1;
+			Inter::clearStatus();
 			Screen::redraw();
 			break;
 		}
+		case ARROW_UP:
 		case 'k':{
 			moveUp(repcount, fbuf);
 			Screen::redraw();
 			break;
 		}
+		case ARROW_DOWN:
+		case 'j':{
+			moveDown(repcount, fbuf);
+			Screen::redraw();
+			break;
+		}
+		case ARROW_RIGHT:
 		case 'l':{
 			moveRight(repcount, fbuf);
+			Screen::redraw();
+			break;
+		}
+		case ARROW_LEFT:
+		case 'h':{
+			moveLeft(repcount, fbuf);
+			Screen::redraw();
+			break;
+		}
+		case BACKSPACE:{// BACKSPACE
+			if(fbuf.curx>=repcount)fbuf.curx-=repcount;
+			else fbuf.curx = 0;
 			Screen::redraw();
 			break;
 		}
@@ -956,7 +1066,7 @@ int runloop(void){
 			break;
 		}
 		case 'g':{
-			const char c2=cin.get();
+			int c2=editorReadKey();
 			if(c2=='g'){
 				fbuf.cury=0;
 				fbuf.curx=0;
@@ -1110,8 +1220,8 @@ int runloop(void){
 			break;
 		}
 		case 'r':{
-			const char replaceChar=cin.get();
-			if(replaceChar=='\x1B')break; // escape
+			int replaceChar=editorReadKey();
+			if(replaceChar==ESC)break; // escape
 			if(!fbuf.contents.exists(fbuf.curx,fbuf.cury)){
 				cout<<gettput("bel")<<flush;
 				break;
@@ -1133,7 +1243,7 @@ int runloop(void){
 			break;
 		}
 		case 'd':{
-			const char c2=cin.get();
+			int c2=editorReadKey();
 			if(c2=='d'){
 				fbuf.contents.removeLine(fbuf.cury);
 				fbuf.dirty=true;// mark as file edited. TODO: check to see if file is empty first
@@ -1162,21 +1272,6 @@ int runloop(void){
 			screensizestore=queryscreensize();
 			Inter::clearStatus();
 			Screen::redraw(true);
-			break;
-		}
-		case '\x7F':{// BACKSPACE
-			//unsigned int backbuffer=0;
-			if(fbuf.curx>=repcount)fbuf.curx-=repcount;
-			else fbuf.curx = 0;
-			/*
-			else {//  TODO: Finish this implementation
-				repcount-=fbuf.curx;
-				while(fbuf.cury>0){
-
-				}
-			}
-			*/
-			Screen::redraw();
 			break;
 		}
 		default:

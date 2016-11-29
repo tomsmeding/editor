@@ -294,6 +294,7 @@ int editorReadKey() {
 // These change the way input works so that getLineStdin works properly
 void disableTimeout() {
 	struct termios tios;
+	tcgetattr(0,&tios);
 
 	tios.c_cc[VMIN] = 1;
 	tios.c_cc[VTIME] = 0;
@@ -301,6 +302,7 @@ void disableTimeout() {
 }
 void enableTimeout() { 
 	struct termios tios;
+	tcgetattr(0,&tios);
 	
 	tios.c_cc[VMIN] = 0;
 	tios.c_cc[VTIME] = 1;

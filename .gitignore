@@ -1,4 +1,4 @@
 *.o
 *.dSYM
-main
+editor
 editor.log

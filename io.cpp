@@ -316,9 +316,9 @@ string getLineStdin(unsigned int startx){
 	unsigned int maxlen=startx>=scrwidth?-1:scrwidth-startx;
 	string line,prettyline;
 	unsigned int scrollx=0;
+	// Kind of a hack
+	disableTimeout();
 	while(true){
-		// Kind of a hack
-		disableTimeout();
 		char c=cin.get();
 		if(c=='\n'||c=='\r')break;
 		else if(c==BACKSPACE){ //backspace
@@ -340,8 +340,8 @@ string getLineStdin(unsigned int startx){
 				}
 			} else cout<<gettput("bel");
 		} else if(c==ESC){ //escape
-			enableTimeout();
-			return "";
+			line="";
+			break;
 		} else {
 			string pret=Screen::prettychar(c);
 			line.push_back(c);
@@ -724,8 +724,6 @@ Either<char,CommandRet> waitForKeyOrCommand(void){
 	return Either<char,CommandRet>::Left(c);
 }
 
-// Right now, we need to pass in the filebuffers. By reference to improve
-// performance a little bit.
 void moveLeft(unsigned int repcount, Inter::Filebuffer &fbuf){
 	if(fbuf.curx>=repcount)fbuf.curx-=repcount;
 	else {

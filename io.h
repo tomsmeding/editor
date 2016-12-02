@@ -36,6 +36,8 @@ void switchColourUl(bool ul);
 void turnOnBold(void); //because freakin terminals don't support turning OFF bold
 void clearMarkup(void);
 
+int editorReadKey(int fd); // Read an input key
+
 string getLineStdin(unsigned int startx=0);
 
 int runloop(void);

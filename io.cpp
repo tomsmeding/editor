@@ -861,12 +861,14 @@ bool jumpToNextOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int skip
 
 bool jumpToPreviousOccurrenceOfChar(Inter::Filebuffer &fbuf,char c,unsigned int skip=0){
 	unsigned int i;
+	cerr <<"This does stuff";
 	for(i=fbuf.curx-1-skip;i>0;i--){
 		const char curchar=fbuf.contents.at(i,fbuf.cury);
 		if(curchar==c){
 			fbuf.curx=i;
 			return true;
 		}
+		cerr << "Interesting"<<endl;
 	}
 	return false;
 }
@@ -1163,19 +1165,19 @@ int runloop(void){
 			insertModeRunLoop();
 			break;
 		case 'f':{
-			bool jumped=jumpToNextOccurrenceOfChar(fbuf,cin.get());
+			bool jumped=jumpToNextOccurrenceOfChar(fbuf,editorReadKey());
 			if(jumped)Screen::redraw();
 			else cout<<gettput("bel")<<flush;
 			break;
 		}
 		case 'F':{
-			bool jumped=jumpToPreviousOccurrenceOfChar(fbuf,cin.get());
+			bool jumped=jumpToPreviousOccurrenceOfChar(fbuf,editorReadKey());
 			if(jumped)Screen::redraw();
 			else cout<<gettput("bel")<<flush;
 			break;
 		}
 		case 't':{
-			bool jumped=jumpToNextOccurrenceOfChar(fbuf,cin.get(),1);
+			bool jumped=jumpToNextOccurrenceOfChar(fbuf,editorReadKey(),1);
 			if(jumped){
 				fbuf.curx=fbuf.curx==0?fbuf.curx:fbuf.curx-1;
 				Screen::redraw();
@@ -1184,7 +1186,7 @@ int runloop(void){
 			break;
 		}
 		case 'T':{
-			bool jumped=jumpToPreviousOccurrenceOfChar(fbuf,cin.get(),1);
+			bool jumped=jumpToPreviousOccurrenceOfChar(fbuf,editorReadKey(),1);
 			if(jumped){
 				const unsigned int llen=fbuf.contents.linelen(fbuf.cury);
 				const unsigned int loc=fbuf.curx+1;
@@ -1249,7 +1251,7 @@ int runloop(void){
 				fbuf.dirty=true;// mark as file edited. TODO: check to see if file is empty first
 
 				const unsigned int nln=fbuf.contents.numlines();
-				unsigned int newy=min(fbuf.cury+repcount,nln-1); // don't move past end of buffer
+				unsigned int newy=min(fbuf.cury+repcount-1,nln-1); // don't move past end of buffer
 				fbuf.cury=newy;
 				moveToBeginAfterIndent(fbuf);
 

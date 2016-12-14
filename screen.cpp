@@ -106,6 +106,7 @@ void copytoscreen(const Screencell *screen,
 }
 
 void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyover,bool forceredraw){
+	IO::gettput("civis"); // Hide cursor. Prevents it from moving everywhere
 	unsigned int scrwidth,scrheight;
 	tie(scrwidth,scrheight)=IO::screensize();
 	const bool validprev=prevscreen&&scrwidth==prevwidth&&scrheight==prevheight;
@@ -135,6 +136,7 @@ void redraw(void (*drawfunc)(Screencell*,unsigned int,unsigned int),bool copyove
 		}
 		memcpy(prevscreen,newscreen,scrwidth*scrheight*sizeof(Screencell));
 	}
+	IO::gettput("cvvis"); // Show cursor
 	gotoFrontBufferCursor();
 	cout.flush();
 }

@@ -2,9 +2,9 @@ CXX := g++
 UNAME := $(shell uname)
 CXXFLAGS := -Wall -Wextra -std=c++11 -O2
 ifeq ($(UNAME),Darwin)
-	LUA := $(shell brew --prefix lua53)
-	CXXFLAGS += -I$(LUA)/include/lua-5.3
-	LDFLAGS := -L$(LUA)/lib/ -llua.5.3
+	LUA := $(shell brew --prefix lua@5.3)
+	CXXFLAGS += -I$(LUA)/include/lua
+	LDFLAGS := -L$(LUA)/lib/ -llua
 else  #linux?
 	# The LUA_VER variable selects the appropriate lua version (5.2, 5.3, whatever)
 	# example:
